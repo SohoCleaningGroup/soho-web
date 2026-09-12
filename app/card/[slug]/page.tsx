@@ -77,6 +77,13 @@ export default async function BusinessCardPage({
             >
               Email
             </a>
+
+            <a
+              href="https://g.page/r/CcebMKcdVpKsEBM/review"
+              className="rounded-2xl border border-[#8f6b2f] px-6 py-4 text-sm font-medium text-[#e3bd74] transition hover:bg-[#151008]"
+            >
+              Write a Review
+            </a>
           </div>
         </div>
       </section>
