@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Refund Policy",
+  description: "Refund and cancellation policy for SoHo Cleaning Group services.",
+  alternates: { canonical: "/refund-policy" },
+};
 
 export default function RefundPolicyPage() {
   return (

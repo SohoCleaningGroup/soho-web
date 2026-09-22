@@ -3,8 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title:
-    "Our Story | SoHo Cleaning Group - Built on Trust & Premium Home Care",
+  title: "Our Story: Cleaning Built on Trust",
 
   description:
     "Meet the people behind SoHo Cleaning Group. A premium New York cleaning company built around trust, accountability, and carefully selected cleaning professionals.",
@@ -43,6 +42,9 @@ export const metadata: Metadata = {
       "Premium cleaning built on trust, accountability, and personal relationships.",
 
     images: ["/images/og/our-story.png"],
+  },
+  alternates: {
+    canonical: "/our-story",
   },
 };
 

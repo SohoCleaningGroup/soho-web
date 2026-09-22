@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import DatePicker from "react-datepicker";
+import Link from "next/link";
 import "react-datepicker/dist/react-datepicker.css";
 
 import {
@@ -353,7 +354,7 @@ export default function UserOnboardingForm() {
                 );
             }
 
-            window.location.href = result.url;
+            window.location.assign(result.url);
         } catch (error) {
             console.error(error);
             alert(
@@ -1480,12 +1481,12 @@ export default function UserOnboardingForm() {
 
                     <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <a
+                            <Link
                                 href="/"
                                 className="rounded-2xl border border-[#5b5141] px-6 py-3 text-sm font-medium text-[#b8ad9a] transition hover:border-[#8f6b2f] hover:text-[#e3bd74]"
                             >
                                 Cancel
-                            </a>
+                            </Link>
 
                             <button
                                 type="button"

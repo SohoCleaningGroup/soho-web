@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   AdditionalAuthorizationStatus,
@@ -346,12 +347,12 @@ function AuthorizationStatePage({
             {content.description}
           </p>
 
-          <a
+          <Link
             href="/"
             className="mt-8 inline-flex rounded-2xl bg-[#d6ab5f] px-6 py-4 text-sm font-semibold text-black transition hover:scale-[1.02]"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </section>
     </main>

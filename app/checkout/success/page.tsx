@@ -70,7 +70,7 @@ export default function CheckoutSuccessPage() {
                   </p>
 
                   <p className="mt-1 text-sm leading-7 text-[#cfc7b7]">
-                    Once your cleaning service has been completed, we'll capture
+                    Once your cleaning service has been completed, we&apos;ll capture
                     the authorized amount from your card.
                   </p>
                 </div>
@@ -85,7 +85,7 @@ export default function CheckoutSuccessPage() {
                   </p>
 
                   <p className="mt-1 text-sm leading-7 text-[#cfc7b7]">
-                    You'll receive confirmation and appointment updates by SMS
+                    You&apos;ll receive confirmation and appointment updates by SMS
                     as your booking progresses.
                   </p>
                 </div>

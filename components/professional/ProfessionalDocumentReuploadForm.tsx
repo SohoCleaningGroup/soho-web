@@ -39,7 +39,11 @@ export default function ProfessionalDocumentReuploadForm({
     }
 
     try {
-      side === "front" ? setIsUploadingFront(true) : setIsUploadingBack(true);
+      if (side === "front") {
+        setIsUploadingFront(true);
+      } else {
+        setIsUploadingBack(true);
+      }
 
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;

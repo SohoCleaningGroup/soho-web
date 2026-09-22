@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { localBusinessJsonLd, GOOGLE_REVIEW_URL } from "@/lib/site";
+
 export const metadata: Metadata = {
-  title:
-    "SoHo Cleaning Group | Premium Home Cleaning Services in Manhattan",
+  title: "Manhattan Apartment Cleaning",
 
   description:
-    "Experience premium apartment and home cleaning in Manhattan with SoHo Cleaning Group. Trusted professionals, luxury service standards, easy online booking, and secure checkout.",
+    "Insured, bonded, in-house Manhattan apartment cleaners serving SoHo, NoHo, the East Village and West Village. Book standard, deep, move-in/out or recurring cleaning.",
 
   keywords: [
     "Manhattan cleaning service",
@@ -55,6 +56,9 @@ export const metadata: Metadata = {
 
     images: ["/images/og/home.png"],
   },
+  alternates: {
+    canonical: "/",
+  },
 };
 
 const phoneNumber = "+1 (646) 530-0590";
@@ -68,6 +72,7 @@ const services = [
       "Perfect for regular upkeep and keeping your home spotless week after week.",
     image: "/images/home/service-standard.jpg",
     icon: "⌂",
+    href: "/services/standard-cleaning",
   },
   {
     title: "SoHo Signature Deep Cleaning",
@@ -75,6 +80,7 @@ const services = [
       "A detailed, top-to-bottom clean for a fresher, healthier living space.",
     image: "/images/home/service-deep.jpg",
     icon: "✦",
+    href: "/services/deep-cleaning",
   },
   {
     title: "Move In / Move Out",
@@ -82,6 +88,7 @@ const services = [
       "We make moving easier with spotless spaces you can feel good about.",
     image: "/images/home/service-move.jpg",
     icon: "□",
+    href: "/services/move-in-move-out-cleaning",
   },
   {
     title: "Recurring Service",
@@ -89,6 +96,7 @@ const services = [
       "Weekly, bi-weekly, or monthly cleaning tailored to your lifestyle.",
     image: "/images/home/service-recurring.jpg",
     icon: "▣",
+    href: "/services/recurring-cleaning",
   },
 ];
 
@@ -142,6 +150,12 @@ const steps = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#050403] text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(localBusinessJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <TopBar />
       <Header />
       <HeroSection />
@@ -266,7 +280,7 @@ function HeroSection() {
           </p>
 
           <h1 className="font-serif text-[46px] leading-[0.98] text-[#f7efe2] sm:text-7xl lg:text-8xl">
-            Pristine Spaces.
+            Manhattan Apartment Cleaning.
             <span className="block text-[#d6ab5f]">Premium Care.</span>
           </h1>
 
@@ -361,7 +375,7 @@ function ServicesSection() {
           </p>
 
           <Link
-            href="/onboarding/user"
+            href="/services"
             className="mt-8 inline-flex rounded-xl border border-[#8f6b2f] px-6 py-3 text-sm font-medium text-[#e7c176] transition hover:bg-[#151008]"
           >
             View All Services
@@ -370,8 +384,9 @@ function ServicesSection() {
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {services.map((service) => (
-            <article
+            <Link
               key={service.title}
+              href={service.href}
               className="group overflow-hidden rounded-sm border border-[#5b3d18] bg-[#0b0906] transition hover:-translate-y-1 hover:border-[#d6ab5f]"
             >
               <div className="relative h-56 sm:h-48">
@@ -399,7 +414,7 @@ function ServicesSection() {
                   {service.description}
                 </p>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       </div>
@@ -592,7 +607,7 @@ function BottomInfoSection() {
             </p>
 
             <a
-              href="#REPLACE_WITH_GOOGLE_REVIEW_LINK"
+              href={GOOGLE_REVIEW_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-2xl border border-[#a8792f] bg-[#151008] px-5 py-3 text-sm font-semibold text-[#e7c176] transition hover:border-[#d6ab5f] hover:bg-[#1c1409]"
@@ -654,10 +669,10 @@ function Footer() {
   ];
 
   const serviceLinks = [
-    { label: "SoHo Signature", href: "/onboarding/user" },
-    { label: "SoHo Signature Deep", href: "/onboarding/user" },
-    { label: "Move In / Move Out", href: "/onboarding/user" },
-    { label: "Recurring Cleaning", href: "/onboarding/user" },
+    { label: "SoHo Signature", href: "/services/standard-cleaning" },
+    { label: "SoHo Signature Deep", href: "/services/deep-cleaning" },
+    { label: "Move In / Move Out", href: "/services/move-in-move-out-cleaning" },
+    { label: "Recurring Cleaning", href: "/services/recurring-cleaning" },
   ];
 
   const policyLinks = [

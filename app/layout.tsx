@@ -4,6 +4,8 @@ import { Analytics } from "@vercel/analytics/next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,12 +19,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ||
-      "https://sohocleaninggroup.com"
+      SITE_URL
   ),
 
   title: {
-    default: "SoHo Cleaning Group | Premium Cleaning in Manhattan",
-    template: "%s | SoHo Cleaning Group",
+    default: "Manhattan Apartment Cleaning | SoHo Cleaning Group",
+    template: `%s | ${SITE_NAME}`,
   },
 
   description:
@@ -55,9 +57,6 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
 
-  alternates: {
-    canonical: "/",
-  },
 };
 
 export default function RootLayout({

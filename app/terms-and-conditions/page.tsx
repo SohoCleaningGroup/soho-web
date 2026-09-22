@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Terms and Conditions",
+  description: "Terms and conditions for SoHo Cleaning Group services.",
+  alternates: { canonical: "/terms-and-conditions" },
+};
 
 export default function TermsAndConditionsPage() {
   return (

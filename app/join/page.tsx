@@ -1,5 +1,13 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Cleaning Careers in Manhattan",
+  description:
+    "Apply to join SoHo Cleaning Group's in-house Manhattan cleaning team.",
+  alternates: { canonical: "/join" },
+};
 
 const instagramUrl = "https://instagram.com/sohocleaninggroup";
 
