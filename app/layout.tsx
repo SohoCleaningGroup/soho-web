@@ -29,6 +29,10 @@ export const metadata: Metadata = {
 
   applicationName: "SoHo Cleaning Group",
 
+  verification: {
+    google: "m0e0-GX9IS8EUtGs_UdWjxWVdLCfs8xwWn-LIFdxUP0",
+  },
+
   openGraph: {
     type: "website",
     siteName: "SoHo Cleaning Group",

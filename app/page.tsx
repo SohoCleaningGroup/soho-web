@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
-import { localBusinessJsonLd, GOOGLE_REVIEW_URL } from "@/lib/site";
+import {
+  localBusinessJsonLd,
+  GOOGLE_REVIEW_URL,
+  SITE_URL,
+} from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Manhattan Apartment Cleaning",
@@ -28,7 +32,7 @@ export const metadata: Metadata = {
     description:
       "Luxury-level cleaning delivered by trusted professionals. Book your Manhattan home cleaning experience online with confidence.",
 
-    url: "https://sohocleaninggroup.com",
+    url: SITE_URL,
 
     siteName: "SoHo Cleaning Group",
 

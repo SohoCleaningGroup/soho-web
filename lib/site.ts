@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const SITE_NAME = "SoHo Cleaning Group";
-export const SITE_URL = "https://sohocleaninggroup.com";
+export const SITE_URL = "https://www.sohocleaninggroup.com";
 export const PHONE_NUMBER = "+1 (646) 530-0590";
 export const PHONE_HREF = "tel:+16465300590";
 export const EMAIL = "info@sohocleaninggroup.com";

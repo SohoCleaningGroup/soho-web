@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { SITE_URL } from "@/lib/site";
+
 export const metadata: Metadata = {
   title: "Our Story: Cleaning Built on Trust",
 
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
     description:
       "We built SoHo Cleaning Group around one simple idea — trust comes first. Meet the people behind your premium home cleaning experience.",
 
-    url: "https://sohocleaninggroup.com/our-story",
+    url: `${SITE_URL}/our-story`,
 
     siteName: "SoHo Cleaning Group",
 

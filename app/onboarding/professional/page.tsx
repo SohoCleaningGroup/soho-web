@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import ProfessionalOnboardingForm from "@/components/onboarding/professional/ProfessionalOnboardingForm";
 
+import { SITE_URL } from "@/lib/site";
+
 export const metadata: Metadata = {
   title:
     "Join SoHo Cleaning Group | Professional Cleaning Careers in Manhattan",
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
     description:
       "Join a premium cleaning team serving Manhattan homes. We work with carefully selected professionals who value quality, trust, and exceptional service.",
 
-    url: "https://sohocleaninggroup.com/onboarding/professional",
+    url: `${SITE_URL}/onboarding/professional`,
 
     siteName: "SoHo Cleaning Group",
 
