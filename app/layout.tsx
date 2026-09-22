@@ -17,10 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ||
-      SITE_URL
-  ),
+  metadataBase: new URL(SITE_URL),
 
   title: {
     default: "Manhattan Apartment Cleaning | SoHo Cleaning Group",
