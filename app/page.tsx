@@ -280,7 +280,7 @@ function HeroSection() {
           </p>
 
           <h1 className="font-serif text-[46px] leading-[0.98] text-[#f7efe2] sm:text-7xl lg:text-8xl">
-            Manhattan Apartment Cleaning.
+            Pristine Spaces.
             <span className="block text-[#d6ab5f]">Premium Care.</span>
           </h1>
 
