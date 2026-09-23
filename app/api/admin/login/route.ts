@@ -39,7 +39,12 @@ export async function POST(req: Request) {
     const adminPassword = process.env.ADMIN_PASSWORD;
     const sessionSecret = process.env.ADMIN_SESSION_SECRET;
 
-    if (!adminEmail || !adminPassword || !sessionSecret) {
+    if (
+      !adminEmail ||
+      !adminPassword ||
+      !sessionSecret ||
+      sessionSecret.length < 32
+    ) {
       return NextResponse.json(
         {
           success: false,

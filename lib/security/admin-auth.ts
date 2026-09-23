@@ -18,10 +18,7 @@ type AdminSession = {
 
 function getSessionSecret() {
   const secret = process.env.ADMIN_SESSION_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("ADMIN_SESSION_SECRET must be at least 32 characters.");
-  }
-  return secret;
+  return secret && secret.length >= 32 ? secret : null;
 }
 
 function digest(value: string) {
@@ -33,16 +30,24 @@ export function secureStringEqual(left: string, right: string) {
 }
 
 export function createAdminSessionToken() {
+  const secret = getSessionSecret();
+  if (!secret) {
+    throw new Error("ADMIN_SESSION_SECRET must be at least 32 characters.");
+  }
+
   return createSignedToken(
     { role: "admin" as const, nonce: randomBytes(16).toString("hex") },
-    getSessionSecret(),
+    secret,
     ADMIN_SESSION_SECONDS
   );
 }
 
 export async function hasValidAdminSession() {
+  const secret = getSessionSecret();
+  if (!secret) return false;
+
   const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
-  const session = verifySignedToken<AdminSession>(token, getSessionSecret());
+  const session = verifySignedToken<AdminSession>(token, secret);
   return session?.role === "admin";
 }
 
