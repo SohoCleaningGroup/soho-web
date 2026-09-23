@@ -18,6 +18,7 @@ import {
   rejectOversizedRequest,
 } from "@/lib/security/request";
 import { stripe } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
 
 const addOnOptions = [
   { id: "INSIDE_FRIDGE", label: "Inside Fridge Cleaning", price: 40 },
@@ -95,6 +96,47 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { success: false, message: "Select a valid future date." },
         { status: 400 }
+      );
+    }
+
+    // One-cleaner staging protection: prevent the same or adjacent 2-hour
+    // arrival window from being sold when an active booking already exists.
+    // Adjacent windows are blocked to preserve travel time between jobs.
+    const dayStart = new Date(preferredDate);
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+
+    const slots = [
+      "08:00-10:00",
+      "10:00-12:00",
+      "12:00-14:00",
+      "14:00-16:00",
+      "16:00-18:00",
+    ] as const;
+    const requestedSlotIndex = slots.indexOf(body.preferredTime);
+    const blockedSlots = slots.filter(
+      (_, index) => Math.abs(index - requestedSlotIndex) <= 1
+    );
+
+    const conflictingBooking = await prisma.booking.findFirst({
+      where: {
+        preferredDate: { gte: dayStart, lt: dayEnd },
+        preferredTime: { in: [...blockedSlots] },
+        status: { in: ["PENDING", "CONFIRMED", "ASSIGNED"] },
+      },
+      select: { id: true },
+    });
+
+    if (conflictingBooking) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "BOOKING_TIME_UNAVAILABLE",
+          message:
+            "That time is no longer available. Please choose another time.",
+        },
+        { status: 409 }
       );
     }
 
