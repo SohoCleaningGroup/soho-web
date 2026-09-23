@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 
 type RecentBookingItem = {
   id: string;
@@ -18,6 +21,10 @@ type RecentProfessionalItem = {
 };
 
 export default async function AdminDashboardPage() {
+  if (!(await hasValidAdminSession())) {
+    redirect("/admin/login");
+  }
+
   const [
     totalBookings,
     pendingBookings,

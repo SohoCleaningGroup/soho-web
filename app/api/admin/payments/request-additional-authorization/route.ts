@@ -1,5 +1,4 @@
 import { randomBytes } from "crypto";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   AdditionalAuthorizationStatus,
@@ -8,28 +7,14 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { notifyAdditionalAuthorizationRequested } from "@/lib/customer-notifications";
-
-const ADMIN_SESSION_COOKIE = "soho_admin_session";
+import { rejectUnauthorizedAdminRequest } from "@/lib/security/admin-auth";
 const REQUEST_EXPIRY_HOURS = 24;
 const REASON_SEPARATOR = "\n\n------------------------\n\n";
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get(ADMIN_SESSION_COOKIE);
-
-    if (
-      !session ||
-      session.value !== process.env.ADMIN_SESSION_SECRET
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        { status: 401 }
-      );
-    }
+    const rejected = await rejectUnauthorizedAdminRequest(req);
+    if (rejected) return rejected;
 
     const body = await req.json();
 
@@ -57,7 +42,9 @@ export async function POST(req: Request) {
 
     if (
       !Number.isFinite(finalAmount) ||
-      finalAmount <= 0
+      finalAmount <= 0 ||
+      finalAmount > 100_000 ||
+      reason.length > 1000
     ) {
       return NextResponse.json(
         {

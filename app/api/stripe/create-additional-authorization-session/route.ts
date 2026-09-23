@@ -6,9 +6,26 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import {
+  getClientIp,
+  rateLimit,
+  rejectCrossOrigin,
+  rejectOversizedRequest,
+} from "@/lib/security/request";
 
 export async function POST(req: Request) {
   try {
+    const rejected =
+      rejectCrossOrigin(req) || rejectOversizedRequest(req, 8 * 1024);
+    if (rejected) return rejected;
+
+    const limited = rateLimit(
+      `additional-checkout:${getClientIp(req)}`,
+      10,
+      30 * 60 * 1000
+    );
+    if (limited) return limited;
+
     const formData = await req.formData();
 
     const token = String(formData.get("token") || "").trim();

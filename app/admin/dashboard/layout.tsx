@@ -1,16 +1,13 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminSidebar from "@/components/admin/layout/AdminSidebar";
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 
 export default async function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("soho_admin_session");
-
-  if (!session || session.value !== process.env.ADMIN_SESSION_SECRET) {
+  if (!(await hasValidAdminSession())) {
     redirect("/admin/login");
   }
 

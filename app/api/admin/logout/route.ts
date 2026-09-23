@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 
-const ADMIN_SESSION_COOKIE = "soho_admin_session";
+import {
+  ADMIN_SESSION_COOKIE,
+  adminSessionCookieOptions,
+} from "@/lib/security/admin-auth";
+import { rejectCrossOrigin } from "@/lib/security/request";
 
 export async function POST(req: Request) {
+  const rejected = rejectCrossOrigin(req);
+  if (rejected) return rejected;
+
   const response = NextResponse.redirect(new URL("/admin/login", req.url), {
     status: 303,
   });
@@ -10,10 +17,7 @@ export async function POST(req: Request) {
   response.cookies.set({
     name: ADMIN_SESSION_COOKIE,
     value: "",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
+    ...adminSessionCookieOptions,
     maxAge: 0,
   });
 

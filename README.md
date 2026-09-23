@@ -118,10 +118,34 @@ Create:
 Add:
 
 ```env
-DATABASE_URL=""
-NEXT_PUBLIC_SUPABASE_URL=""
-NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_SUPABASE_URL="https://PROJECT.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="server-only-service-role-key"
+
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="use-a-password-manager-generated-password"
+ADMIN_SESSION_SECRET="at-least-32-random-characters"
+PHONE_VERIFICATION_SECRET="a-different-at-least-32-character-secret"
+
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
+TWILIO_ACCOUNT_SID="AC..."
+TWILIO_AUTH_TOKEN="server-only-auth-token"
+TWILIO_VERIFY_SERVICE_SID="VA..."
+TWILIO_MESSAGING_SERVICE_SID="MG..."
+
+SENDGRID_API_KEY="SG..."
+SENDGRID_FROM_EMAIL="verified-sender@example.com"
+SENDGRID_FROM_NAME="SoHo Cleaning Group"
 ```
+
+Never expose service-role, database, payment, messaging, or session secrets with
+a `NEXT_PUBLIC_` prefix. Use distinct random values for the admin password,
+admin session secret, and phone verification secret.
 
 ---
 

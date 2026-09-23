@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 
 type CustomerItem = {
   id: string;
@@ -17,6 +20,10 @@ type CustomerItem = {
 };
 
 export default async function AdminCustomersPage() {
+  if (!(await hasValidAdminSession())) {
+    redirect("/admin/login");
+  }
+
   const customers = await prisma.userProfile.findMany({
     where: {
       role: "USER",

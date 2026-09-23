@@ -19,13 +19,16 @@ import {
   notifyBookingCreated,
 } from "@/lib/customer-notifications";
 import { notifyAdminsOfNewBooking } from "@/lib/admin-booking-notifications";
+import { rejectOversizedRequest } from "@/lib/security/request";
 
 const ORIGINAL_BOOKING_FLOW = "MANUAL_CAPTURE";
 const ADDITIONAL_AUTHORIZATION_FLOW = "ADDITIONAL_AUTHORIZATION";
 
 export async function POST(req: Request) {
   try {
-    const rawBody = await req.text();
+    const rejected = rejectOversizedRequest(req, 1024 * 1024);
+    if (rejected) return rejected;
+
     const signature = req.headers.get("stripe-signature");
 
     if (!signature) {
@@ -37,6 +40,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const rawBody = await req.text();
 
     const event = stripe.webhooks.constructEvent(
       rawBody,

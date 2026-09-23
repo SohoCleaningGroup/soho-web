@@ -1,9 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AdditionalAuthorizationStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import BookingStatusActions from "@/components/admin/bookings/BookingStatusActions";
 import PaymentActions from "@/components/admin/payments/PaymentActions";
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 
 type PaymentStatus =
     | "PENDING"
@@ -39,6 +40,10 @@ export default async function BookingDetailPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
+    if (!(await hasValidAdminSession())) {
+        redirect("/admin/login");
+    }
+
     const { id } = await params;
 
     const booking = await prisma.booking.findUnique({

@@ -1,33 +1,16 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { ProfessionalIdDocumentStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { notifyProfessionalDocumentReuploadRequested } from "@/lib/customer-notifications";
+import { rejectUnauthorizedAdminRequest } from "@/lib/security/admin-auth";
 
-const ADMIN_SESSION_COOKIE = "soho_admin_session";
 const REUPLOAD_EXPIRY_DAYS = 7;
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get(
-      ADMIN_SESSION_COOKIE
-    );
-
-    if (
-      !session ||
-      session.value !==
-        process.env.ADMIN_SESSION_SECRET
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        { status: 401 }
-      );
-    }
+    const rejected = await rejectUnauthorizedAdminRequest(req);
+    if (rejected) return rejected;
 
     const body = await req.json();
 
