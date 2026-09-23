@@ -54,7 +54,10 @@ const checkoutSchema = z.object({
   ]),
   hasPets: z.boolean(),
   selectedAddOns: z.array(z.string()).max(10),
-  specialNotes: z.string().trim().max(1500).optional().default(""),
+  // Stripe metadata values are limited to 500 characters. The webhook uses
+  // this value to create the booking, so reject longer notes before opening
+  // Checkout instead of letting Stripe fail the session request.
+  specialNotes: z.string().trim().max(500).optional().default(""),
 });
 
 export async function POST(request: Request) {

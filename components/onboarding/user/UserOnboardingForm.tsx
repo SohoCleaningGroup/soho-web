@@ -1223,6 +1223,7 @@ export default function UserOnboardingForm() {
                             <Textarea
                                 label="Special Notes"
                                 value={formData.specialNotes}
+                                maxLength={500}
                                 onChange={(value) =>
                                     updateField(
                                         "specialNotes",
@@ -1612,10 +1613,12 @@ function Textarea({
     label,
     value,
     onChange,
+    maxLength,
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
+    maxLength?: number;
 }) {
     return (
         <label className="block">
@@ -1625,6 +1628,7 @@ function Textarea({
 
             <textarea
                 value={value}
+                maxLength={maxLength}
                 onChange={(event) =>
                     onChange(event.target.value)
                 }
