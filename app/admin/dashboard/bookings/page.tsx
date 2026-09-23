@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 type BookingItem = {
   id: string;
   cleaningType: string;
@@ -19,6 +22,10 @@ type BookingItem = {
 };
 
 export default async function AdminBookingsPage() {
+    if (!(await hasValidAdminSession())) {
+        redirect("/admin/login");
+    }
+
     const bookings = await prisma.booking.findMany({
         include: {
             userProfile: true,

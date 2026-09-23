@@ -1,8 +1,13 @@
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProfessionalStatusActions from "@/components/admin/professionals/ProfessionalStatusActions";
 import DocumentReuploadAction from "@/components/admin/professionals/DocumentReuploadAction";
+import {
+  createDocumentViewUrl,
+  createProfileViewUrl,
+} from "@/lib/professional-documents";
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 
 export default async function ProfessionalDetailPage({
   params,
@@ -11,6 +16,10 @@ export default async function ProfessionalDetailPage({
 }) {
   const { id } = await params;
 
+  if (!(await hasValidAdminSession())) {
+    redirect("/admin/login");
+  }
+
   const professional = await prisma.professionalProfile.findUnique({
     where: { id },
   });
@@ -18,6 +27,12 @@ export default async function ProfessionalDetailPage({
   if (!professional) {
     notFound();
   }
+
+  const [profileImageUrl, frontDocumentUrl, backDocumentUrl] = await Promise.all([
+    createProfileViewUrl(professional.profileImageUrl),
+    createDocumentViewUrl(professional.idDocumentFrontUrl),
+    createDocumentViewUrl(professional.idDocumentBackUrl),
+  ]);
 
   return (
     <section>
@@ -38,9 +53,9 @@ export default async function ProfessionalDetailPage({
       <div className="grid gap-6 lg:grid-cols-[0.7fr_1fr]">
         <div className="rounded-[28px] border border-[#2a2419] bg-[#0a0a0a] p-6 text-center">
           <div className="relative mx-auto flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border border-[#8f6b2f] bg-[#151008] font-serif text-4xl text-[#d6ab5f]">
-            {professional.profileImageUrl ? (
+            {profileImageUrl ? (
               <Image
-                src={professional.profileImageUrl}
+                src={profileImageUrl}
                 alt={professional.fullName}
                 fill
                 sizes="128px"
@@ -132,7 +147,7 @@ export default async function ProfessionalDetailPage({
                     ? "Passport First Page"
                     : "ID Front Side"
                 }
-                url={professional.idDocumentFrontUrl}
+                url={frontDocumentUrl}
               />
 
               <DocumentPreviewCard
@@ -141,7 +156,7 @@ export default async function ProfessionalDetailPage({
                     ? "Passport Last Page"
                     : "ID Back Side"
                 }
-                url={professional.idDocumentBackUrl}
+                url={backDocumentUrl}
               />
             </div>
           </Panel>

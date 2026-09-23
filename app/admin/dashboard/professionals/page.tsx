@@ -1,6 +1,10 @@
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { createProfileViewUrl } from "@/lib/professional-documents";
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 
 type ProfessionalItem = {
   id: string;
@@ -20,11 +24,21 @@ type ProfessionalItem = {
 };
 
 export default async function AdminProfessionalsPage() {
+    if (!(await hasValidAdminSession())) {
+        redirect("/admin/login");
+    }
+
     const professionals = await prisma.professionalProfile.findMany({
         orderBy: {
             createdAt: "desc",
         },
     });
+    const professionalItems = await Promise.all(
+        professionals.map(async (professional) => ({
+            ...professional,
+            profileImageUrl: await createProfileViewUrl(professional.profileImageUrl),
+        }))
+    );
 
     return (
         <section>
@@ -42,11 +56,11 @@ export default async function AdminProfessionalsPage() {
                 </p>
             </div>
 
-            {professionals.length === 0 ? (
+            {professionalItems.length === 0 ? (
                 <EmptyState />
             ) : (
                 <div className="grid gap-6">
-                    {professionals.map((professional: ProfessionalItem) => (
+                    {professionalItems.map((professional: ProfessionalItem) => (
                         <article
                             key={professional.id}
                             className="rounded-[28px] border border-[#2a2419] bg-[#0a0a0a] p-6"

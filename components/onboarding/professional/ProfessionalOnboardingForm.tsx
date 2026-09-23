@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase/client";
 
 type IdDocumentType = "NATIONAL_ID" | "PASSPORT" | "";
 
@@ -69,6 +68,7 @@ export default function ProfessionalOnboardingForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
+    const [profileImagePreviewUrl, setProfileImagePreviewUrl] = useState("");
     const [isUploadingIdFront, setIsUploadingIdFront] = useState(false);
     const [isUploadingIdBack, setIsUploadingIdBack] = useState(false);
     const [otpCode, setOtpCode] = useState("");
@@ -236,31 +236,13 @@ export default function ProfessionalOnboardingForm() {
     const uploadProfileImage = async (file: File) => {
         try {
             setIsUploadingProfileImage(true);
-
-            const fileExt = file.name.split(".").pop();
-            const fileName = `${Date.now()}-${Math.random()
-                .toString(36)
-                .substring(2)}.${fileExt}`;
-            const filePath = `profiles/${fileName}`;
-
-            const { error } = await supabase.storage
-                .from("professional-profiles")
-                .upload(filePath, file, {
-                    cacheControl: "3600",
-                    upsert: false,
-                });
-
-            if (error) {
-                console.error(error);
-                alert("Image upload failed. Please try again.");
-                return;
-            }
-
-            const { data } = supabase.storage
-                .from("professional-profiles")
-                .getPublicUrl(filePath);
-
-            updateField("profileImageUrl", data.publicUrl);
+            const upload = await uploadProfessionalFile(
+                file,
+                "profile",
+                normalizePhone()
+            );
+            updateField("profileImageUrl", upload.value);
+            setProfileImagePreviewUrl(upload.previewUrl || "");
         } catch (error) {
             console.error(error);
             alert("Image upload failed. Please try again.");
@@ -297,38 +279,16 @@ export default function ProfessionalOnboardingForm() {
                 setIsUploadingIdBack(true);
             }
 
-            const fileExt = file.name.split(".").pop();
-            const fileName = `${Date.now()}-${Math.random()
-                .toString(36)
-                .substring(2)}.${fileExt}`;
-
-            const folder = formData.email
-                ? formData.email.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()
-                : "pending";
-
-            const filePath = `${folder}/${side}-${fileName}`;
-
-            const { error } = await supabase.storage
-                .from("professional-documents")
-                .upload(filePath, file, {
-                    cacheControl: "3600",
-                    upsert: false,
-                });
-
-            if (error) {
-                console.error(error);
-                alert("Document upload failed. Please try again.");
-                return;
-            }
-
-            const { data } = supabase.storage
-                .from("professional-documents")
-                .getPublicUrl(filePath);
+            const upload = await uploadProfessionalFile(
+                file,
+                side === "front" ? "id-front" : "id-back",
+                normalizePhone()
+            );
 
             if (side === "front") {
-                updateField("idDocumentFrontUrl", data.publicUrl);
+                updateField("idDocumentFrontUrl", upload.value);
             } else {
-                updateField("idDocumentBackUrl", data.publicUrl);
+                updateField("idDocumentBackUrl", upload.value);
             }
         } catch (error) {
             console.error(error);
@@ -419,7 +379,7 @@ export default function ProfessionalOnboardingForm() {
                     {step === 0 && (
                         <div className="grid gap-5">
                             <ProfileImageUpload
-                                value={formData.profileImageUrl}
+                                value={profileImagePreviewUrl}
                                 isUploading={isUploadingProfileImage}
                                 onChange={uploadProfileImage}
                             />
@@ -653,9 +613,9 @@ export default function ProfessionalOnboardingForm() {
                             <div className="rounded-[28px] border border-[#2f291d] bg-[#111111] p-6">
                                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                                     <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#8f6b2f] bg-[#151008] font-serif text-3xl text-[#d6ab5f]">
-                                        {formData.profileImageUrl ? (
+                                        {profileImagePreviewUrl ? (
                                             <Image
-                                                src={formData.profileImageUrl}
+                                                src={profileImagePreviewUrl}
                                                 alt={formData.fullName}
                                                 fill
                                                 sizes="80px"
@@ -983,35 +943,16 @@ function IdDocumentUpload({
     isUploading: boolean;
     onChange: (file: File) => void;
 }) {
-    const isPdf = value.toLowerCase().includes(".pdf");
-
     return (
         <div className="rounded-[28px] border border-[#2f291d] bg-[#111111] p-5">
             <p className="mb-3 text-sm font-medium text-[#d8d0c1]">{label}</p>
 
             <div className="mb-4 flex min-h-[180px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[#3a2812] bg-[#0a0a0a]">
                 {value ? (
-                    isPdf ? (
-                        <div className="text-center">
-                            <p className="text-4xl text-[#d6ab5f]">PDF</p>
-                            <a
-                                href={value}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-3 inline-flex text-sm text-[#e3bd74] underline"
-                            >
-                                Preview PDF
-                            </a>
-                        </div>
-                    ) : (
-                        <Image
-                            src={value}
-                            alt={label}
-                            width={420}
-                            height={260}
-                            className="max-h-[260px] w-full object-contain"
-                        />
-                    )
+                    <div className="text-center">
+                        <p className="text-4xl text-[#d6ab5f]">✓</p>
+                        <p className="mt-3 text-sm text-[#e3bd74]">Securely uploaded</p>
+                    </div>
                 ) : (
                     <p className="px-6 text-center text-sm leading-7 text-[#8f8778]">
                         No file uploaded yet.
@@ -1041,6 +982,34 @@ function IdDocumentUpload({
             </label>
         </div>
     );
+}
+
+async function uploadProfessionalFile(
+    file: File,
+    kind: "profile" | "id-front" | "id-back",
+    phone: string
+) {
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("kind", kind);
+    formData.set("flow", "application");
+    formData.set("phone", phone);
+
+    const response = await fetch("/api/uploads/professional", {
+        method: "POST",
+        body: formData,
+    });
+    const result = await response.json();
+
+    if (!response.ok || !result.success || typeof result.value !== "string") {
+        throw new Error(result.message || "Upload failed.");
+    }
+
+    return {
+        value: result.value as string,
+        previewUrl:
+            typeof result.previewUrl === "string" ? result.previewUrl : undefined,
+    };
 }
 
 const inputClass =

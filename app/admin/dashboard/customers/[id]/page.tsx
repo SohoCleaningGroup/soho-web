@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { hasValidAdminSession } from "@/lib/security/admin-auth";
 
 type CustomerBookingItem = {
   id: string;
@@ -17,6 +18,10 @@ export default async function CustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  if (!(await hasValidAdminSession())) {
+    redirect("/admin/login");
+  }
+
   const { id } = await params;
 
   const customer = await prisma.userProfile.findUnique({

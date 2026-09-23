@@ -1,8 +1,6 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client";
 
 type IdDocumentType = "NATIONAL_ID" | "PASSPORT";
 
@@ -45,25 +43,24 @@ export default function ProfessionalDocumentReuploadForm({
         setIsUploadingBack(true);
       }
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `reuploads/${token}/${side}-${fileName}`;
+      const formData = new FormData();
+      formData.set("file", file);
+      formData.set("kind", side === "front" ? "id-front" : "id-back");
+      formData.set("flow", "reupload");
+      formData.set("token", token);
 
-      const { error } = await supabase.storage
-        .from("professional-documents")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+      const response = await fetch("/api/uploads/professional", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await response.json();
 
-      if (error) throw error;
+      if (!response.ok || !result.success || typeof result.value !== "string") {
+        throw new Error(result.message || "Upload failed.");
+      }
 
-      const { data } = supabase.storage
-        .from("professional-documents")
-        .getPublicUrl(filePath);
-
-      if (side === "front") setFrontUrl(data.publicUrl);
-      else setBackUrl(data.publicUrl);
+      if (side === "front") setFrontUrl(result.value);
+      else setBackUrl(result.value);
     } catch (error) {
       console.error(error);
       alert("Document upload failed. Please try again.");
@@ -245,35 +242,16 @@ function DocumentUploadBox({
   isUploading: boolean;
   onChange: (file: File) => void;
 }) {
-  const isPdf = value.toLowerCase().includes(".pdf");
-
   return (
     <div className="rounded-[28px] border border-[#2f291d] bg-[#111111] p-5">
       <p className="mb-3 text-sm font-medium text-[#d8d0c1]">{label}</p>
 
       <div className="mb-4 flex min-h-[180px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[#3a2812] bg-[#0a0a0a]">
         {value ? (
-          isPdf ? (
-            <div className="text-center">
-              <p className="font-serif text-4xl text-[#d6ab5f]">PDF</p>
-              <a
-                href={value}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-flex text-sm text-[#e3bd74] underline"
-              >
-                Preview PDF
-              </a>
-            </div>
-          ) : (
-            <Image
-              src={value}
-              alt={label}
-              width={420}
-              height={260}
-              className="max-h-[260px] w-full object-contain"
-            />
-          )
+          <div className="text-center">
+            <p className="font-serif text-4xl text-[#d6ab5f]">✓</p>
+            <p className="mt-3 text-sm text-[#e3bd74]">Securely uploaded</p>
+          </div>
         ) : (
           <p className="px-6 text-center text-sm text-[#8f8778]">
             No file uploaded yet.

@@ -4,12 +4,36 @@ import {
   ProfessionalIdDocumentStatus,
   ProfessionalIdDocumentType,
 } from "@prisma/client";
+import { z } from "zod";
+import {
+  getClientIp,
+  rateLimit,
+  rejectCrossOrigin,
+  rejectOversizedRequest,
+} from "@/lib/security/request";
+
+const reuploadSchema = z.object({
+  token: z.string().min(32).max(256),
+  idDocumentType: z.enum(ProfessionalIdDocumentType),
+  idDocumentFrontUrl: z.string().min(1).max(1000),
+  idDocumentBackUrl: z.string().min(1).max(1000),
+});
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const rejected =
+      rejectCrossOrigin(req) || rejectOversizedRequest(req, 16 * 1024);
+    if (rejected) return rejected;
 
-    if (!body.token) {
+    const limited = rateLimit(
+      `document-reupload:${getClientIp(req)}`,
+      8,
+      30 * 60 * 1000
+    );
+    if (limited) return limited;
+
+    const parsed = reuploadSchema.safeParse(await req.json());
+    if (!parsed.success) {
       return NextResponse.json(
         {
           success: false,
@@ -18,6 +42,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const body = parsed.data;
 
     const professional = await prisma.professionalProfile.findFirst({
       where: {
@@ -35,6 +61,18 @@ export async function POST(req: Request) {
           message: "This reupload link is invalid or expired.",
         },
         { status: 404 }
+      );
+    }
+
+    const expectedFront = `reuploads/${professional.id}/id-front-`;
+    const expectedBack = `reuploads/${professional.id}/id-back-`;
+    if (
+      !body.idDocumentFrontUrl.startsWith(expectedFront) ||
+      !body.idDocumentBackUrl.startsWith(expectedBack)
+    ) {
+      return NextResponse.json(
+        { success: false, message: "Invalid uploaded file reference." },
+        { status: 400 }
       );
     }
 

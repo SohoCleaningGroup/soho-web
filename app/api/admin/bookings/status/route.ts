@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import {
   BookingStatus,
   PaymentStatus,
@@ -8,23 +7,12 @@ import {
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { notifyBookingStatusChanged } from "@/lib/customer-notifications";
-
-const ADMIN_SESSION_COOKIE = "soho_admin_session";
+import { rejectUnauthorizedAdminRequest } from "@/lib/security/admin-auth";
 
 export async function PATCH(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const session = cookieStore.get(ADMIN_SESSION_COOKIE);
-
-    if (!session || session.value !== process.env.ADMIN_SESSION_SECRET) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        { status: 401 }
-      );
-    }
+    const rejected = await rejectUnauthorizedAdminRequest(req);
+    if (rejected) return rejected;
 
     const body = await req.json();
 
