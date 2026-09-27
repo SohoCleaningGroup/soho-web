@@ -11,6 +11,7 @@ begin
     'ProfessionalProfile',
     'Payment',
     'AdditionalAuthorization',
+    'BookingSlotHold',
     '_prisma_migrations'
   ]
   loop
