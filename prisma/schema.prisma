@@ -40,9 +40,11 @@ model Booking {
   selectedAddOns String[] @default([])
   addOnTotal     Float    @default(0)
 
-  preferredDate DateTime?
-  preferredTime String?
-  frequency     CleaningFrequency
+  preferredDate             DateTime?
+  preferredTime             String?
+  totalSqft                 Int?
+  estimatedDurationMinutes  Int?
+  frequency                 CleaningFrequency
   specialNotes  String?
 
   status BookingStatus @default(PENDING)
@@ -57,9 +59,10 @@ model Booking {
 
 model BookingSlotHold {
   id                String   @id @default(cuid())
-  preferredDate     DateTime
-  preferredTime     String
-  checkoutSessionId String?  @unique
+  preferredDate            DateTime
+  preferredTime            String
+  estimatedDurationMinutes Int
+  checkoutSessionId        String?  @unique
   expiresAt         DateTime
   createdAt         DateTime @default(now())
 
