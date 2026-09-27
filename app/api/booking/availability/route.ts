@@ -1,25 +1,33 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import {
+  estimateCleaningDurationMinutes,
+  getBookingCapacity,
+  getTravelBufferMinutes,
+  isSlotAvailable,
+  BOOKING_TIME_SLOTS,
+  type BookingTimeSlot,
+} from "@/lib/scheduling/booking-availability";
+import type {
+  CleaningType,
+  HomeSize,
+} from "@/lib/pricing/cleaning-pricing";
 import { getClientIp, rateLimit } from "@/lib/security/request";
 
-const TIME_SLOTS = [
-  "08:00-10:00",
-  "10:00-12:00",
-  "12:00-14:00",
-  "14:00-16:00",
-  "16:00-18:00",
-] as const;
+const SUPPORTED_CLEANING_TYPES = new Set<CleaningType>([
+  "SOHO_SIGNATURE",
+  "SOHO_SIGNATURE_DEEP",
+  "MOVE_IN_MOVE_OUT",
+  "RECURRING",
+]);
 
-function getBookingCapacity() {
-  const parsedCapacity = Number(process.env.CLEANING_BOOKING_CAPACITY || "1");
-
-  return Number.isInteger(parsedCapacity) &&
-    parsedCapacity >= 1 &&
-    parsedCapacity <= 10
-    ? parsedCapacity
-    : 1;
-}
+const SUPPORTED_HOME_SIZES = new Set<HomeSize>([
+  "1BHK",
+  "2BHK",
+  "3BHK",
+  "4BHK",
+]);
 
 export async function GET(request: Request) {
   const limited = rateLimit(
@@ -31,6 +39,13 @@ export async function GET(request: Request) {
 
   const requestUrl = new URL(request.url);
   const dateValue = requestUrl.searchParams.get("date");
+  const cleaningTypeValue = requestUrl.searchParams.get("cleaningType");
+  const homeSizeValue = requestUrl.searchParams.get("homeSize");
+  const totalSqftValue = Number(requestUrl.searchParams.get("totalSqft"));
+  const selectedAddOns = requestUrl.searchParams
+    .getAll("addOn")
+    .filter(Boolean);
+
   const preferredDate = dateValue ? new Date(dateValue) : null;
 
   if (!preferredDate || Number.isNaN(preferredDate.getTime())) {
@@ -40,12 +55,37 @@ export async function GET(request: Request) {
     );
   }
 
+  if (
+    !cleaningTypeValue ||
+    !SUPPORTED_CLEANING_TYPES.has(cleaningTypeValue as CleaningType) ||
+    !homeSizeValue ||
+    !SUPPORTED_HOME_SIZES.has(homeSizeValue as HomeSize) ||
+    !Number.isFinite(totalSqftValue) ||
+    totalSqftValue < 100
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Complete the service and home details first.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const cleaningType = cleaningTypeValue as CleaningType;
+  const homeSize = homeSizeValue as HomeSize;
+  const requestedDurationMinutes = estimateCleaningDurationMinutes({
+    cleaningType,
+    homeSize,
+    totalSqft: totalSqftValue,
+    selectedAddOns,
+  });
+
   const dayStart = new Date(preferredDate);
   dayStart.setUTCHours(0, 0, 0, 0);
   const dayEnd = new Date(dayStart);
   dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
   const now = new Date();
-  const bookingCapacity = getBookingCapacity();
 
   await prisma.bookingSlotHold.deleteMany({
     where: { expiresAt: { lte: now } },
@@ -55,44 +95,45 @@ export async function GET(request: Request) {
     prisma.booking.findMany({
       where: {
         preferredDate: { gte: dayStart, lt: dayEnd },
-        preferredTime: { in: [...TIME_SLOTS] },
         status: { in: ["PENDING", "CONFIRMED", "ASSIGNED"] },
       },
-      select: { preferredTime: true },
+      select: {
+        preferredTime: true,
+        estimatedDurationMinutes: true,
+      },
     }),
     prisma.bookingSlotHold.findMany({
       where: {
         preferredDate: { gte: dayStart, lt: dayEnd },
-        preferredTime: { in: [...TIME_SLOTS] },
         expiresAt: { gt: now },
       },
-      select: { preferredTime: true },
+      select: {
+        preferredTime: true,
+        estimatedDurationMinutes: true,
+      },
     }),
   ]);
 
-  const occupiedTimes = [
-    ...bookings.map((booking) => booking.preferredTime),
-    ...holds.map((hold) => hold.preferredTime),
-  ];
+  const intervals = [...bookings, ...holds];
+  const capacity = getBookingCapacity();
+  const travelBufferMinutes = getTravelBufferMinutes();
 
-  const unavailableSlots = TIME_SLOTS.filter((slot, requestedIndex) => {
-    const conflictCount = occupiedTimes.filter((occupiedTime) => {
-      const occupiedIndex = TIME_SLOTS.indexOf(
-        occupiedTime as (typeof TIME_SLOTS)[number]
-      );
-
-      return (
-        occupiedIndex >= 0 &&
-        Math.abs(occupiedIndex - requestedIndex) <= 1
-      );
-    }).length;
-
-    return conflictCount >= bookingCapacity;
-  });
+  const unavailableSlots = BOOKING_TIME_SLOTS.filter(
+    (slot) =>
+      !isSlotAvailable({
+        requestedSlot: slot as BookingTimeSlot,
+        requestedDurationMinutes,
+        intervals,
+        capacity,
+        travelBufferMinutes,
+      })
+  );
 
   return NextResponse.json({
     success: true,
-    capacity: bookingCapacity,
+    capacity,
+    estimatedDurationMinutes: requestedDurationMinutes,
+    travelBufferMinutes,
     unavailableSlots,
   });
 }
