@@ -49,6 +49,24 @@ export async function POST(req: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
 
+    if (event.type === "checkout.session.expired") {
+      const expiredSession = event.data.object;
+
+      await prisma.bookingSlotHold
+        .deleteMany({ where: { checkoutSessionId: expiredSession.id } })
+        .catch((error) =>
+          console.warn("BOOKING_SLOT_HOLD_EXPIRE_RELEASE_FAILED", {
+            checkoutSessionId: expiredSession.id,
+            error,
+          })
+        );
+
+      return NextResponse.json({
+        received: true,
+        releasedExpiredSlotHold: true,
+      });
+    }
+
     if (event.type !== "checkout.session.completed") {
       return NextResponse.json({
         received: true,
