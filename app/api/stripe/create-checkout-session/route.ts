@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     const bookingCapacity = getBookingCapacity();
     const travelBufferMinutes = getTravelBufferMinutes();
 
-    const checkoutExpiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
+    const checkoutExpiresAt = Math.floor(Date.now() / 1000) + 35 * 60;
     const holdExpiresAt = new Date((checkoutExpiresAt + 5 * 60) * 1000);
 
     const holdResult = await prisma.$transaction(async (tx) => {
