@@ -1,5 +1,7 @@
 import type { CleaningType, HomeSize } from "@/lib/pricing/cleaning-pricing";
 
+const SERVICE_DAY_MINUTES = 10 * 60; // 8:00 AM through 6:00 PM
+
 export const BOOKING_TIME_SLOTS = [
   "08:00-10:00",
   "10:00-12:00",
@@ -120,8 +122,15 @@ export function isSlotAvailable({
   const requestedStart = slotStartMinutes(requestedSlot);
   if (requestedStart === null) return false;
 
-  const requestedEnd =
-    requestedStart + requestedDurationMinutes + travelBufferMinutes;
+  const serviceEnd = requestedStart + requestedDurationMinutes;
+
+  // Do not offer starts that would make the cleaning itself run past 6 PM.
+  // Travel after a job is not counted against the customer's service window.
+  if (serviceEnd > SERVICE_DAY_MINUTES) {
+    return false;
+  }
+
+  const requestedEnd = serviceEnd + travelBufferMinutes;
 
   // Scan in 30-minute increments across the proposed job + travel buffer.
   // Capacity is exhausted only when that many existing jobs/holds overlap
