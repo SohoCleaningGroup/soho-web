@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import Link from "next/link";
 import "react-datepicker/dist/react-datepicker.css";
@@ -200,8 +200,81 @@ export default function UserOnboardingForm() {
     const [isSendingOtp, setIsSendingOtp] = useState(false);
     const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
     const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+    const [unavailableTimeSlots, setUnavailableTimeSlots] = useState<string[]>([]);
+    const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+    const [availabilityError, setAvailabilityError] = useState("");
 
     const [countryCode, setCountryCode] = useState("+1");
+
+    useEffect(() => {
+        if (!formData.preferredDate) {
+            setUnavailableTimeSlots([]);
+            setAvailabilityError("");
+            return;
+        }
+
+        const controller = new AbortController();
+
+        async function loadAvailability() {
+            setIsCheckingAvailability(true);
+            setAvailabilityError("");
+
+            try {
+                const response = await fetch(
+                    `/api/booking/availability?date=${encodeURIComponent(
+                        formData.preferredDate!.toISOString()
+                    )}`,
+                    {
+                        method: "GET",
+                        signal: controller.signal,
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.message || "Unable to check availability."
+                    );
+                }
+
+                const unavailable = Array.isArray(result.unavailableSlots)
+                    ? result.unavailableSlots
+                    : [];
+
+                setUnavailableTimeSlots(unavailable);
+
+                if (
+                    formData.preferredTime &&
+                    unavailable.includes(formData.preferredTime)
+                ) {
+                    setFormData((prev) => ({
+                        ...prev,
+                        preferredTime: "",
+                    }));
+                }
+            } catch (error) {
+                if (
+                    error instanceof DOMException &&
+                    error.name === "AbortError"
+                ) {
+                    return;
+                }
+
+                setAvailabilityError(
+                    "Live availability could not be refreshed. We’ll verify the time again before checkout."
+                );
+            } finally {
+                if (!controller.signal.aborted) {
+                    setIsCheckingAvailability(false);
+                }
+            }
+        }
+
+        loadAvailability();
+
+        return () => controller.abort();
+    }, [formData.preferredDate, formData.preferredTime]);
 
     const pricing =
         formData.cleaningType && formData.homeSize
@@ -1191,8 +1264,28 @@ export default function UserOnboardingForm() {
                                             value
                                         )
                                     }
-                                    options={timeSlots}
+                                    options={timeSlots.map((slot) => ({
+                                        ...slot,
+                                        label: unavailableTimeSlots.includes(slot.value)
+                                            ? `${slot.label} — Unavailable`
+                                            : slot.label,
+                                        disabled:
+                                            isCheckingAvailability ||
+                                            unavailableTimeSlots.includes(slot.value),
+                                    }))}
                                 />
+
+                                {isCheckingAvailability && (
+                                    <p className="text-xs text-[#8f8778]">
+                                        Checking live availability...
+                                    </p>
+                                )}
+
+                                {availabilityError && (
+                                    <p className="text-xs text-amber-300">
+                                        {availabilityError}
+                                    </p>
+                                )}
                             </div>
 
                             <button
@@ -1577,6 +1670,7 @@ function Select({
     options: Array<{
         label: string;
         value: string;
+        disabled?: boolean;
     }>;
 }) {
     return (
@@ -1600,6 +1694,7 @@ function Select({
                     <option
                         key={option.value}
                         value={option.value}
+                        disabled={option.disabled}
                     >
                         {option.label}
                     </option>
