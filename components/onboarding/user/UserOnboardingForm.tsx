@@ -203,13 +203,16 @@ export default function UserOnboardingForm() {
     const [unavailableTimeSlots, setUnavailableTimeSlots] = useState<string[]>([]);
     const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
     const [availabilityError, setAvailabilityError] = useState("");
+    const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState<number | null>(null);
 
     const [countryCode, setCountryCode] = useState("+1");
+    const selectedAddOnsKey = formData.selectedAddOns.join(",");
 
     useEffect(() => {
         if (!formData.preferredDate) {
             setUnavailableTimeSlots([]);
             setAvailabilityError("");
+            setEstimatedDurationMinutes(null);
             return;
         }
 
@@ -220,10 +223,19 @@ export default function UserOnboardingForm() {
             setAvailabilityError("");
 
             try {
+                const params = new URLSearchParams({
+                    date: formData.preferredDate!.toISOString(),
+                    cleaningType: formData.cleaningType,
+                    homeSize: formData.homeSize,
+                    totalSqft: formData.totalSqft,
+                });
+
+                formData.selectedAddOns.forEach((addOn) =>
+                    params.append("addOn", addOn)
+                );
+
                 const response = await fetch(
-                    `/api/booking/availability?date=${encodeURIComponent(
-                        formData.preferredDate!.toISOString()
-                    )}`,
+                    `/api/booking/availability?${params.toString()}`,
                     {
                         method: "GET",
                         signal: controller.signal,
@@ -243,6 +255,11 @@ export default function UserOnboardingForm() {
                     : [];
 
                 setUnavailableTimeSlots(unavailable);
+                setEstimatedDurationMinutes(
+                    typeof result.estimatedDurationMinutes === "number"
+                        ? result.estimatedDurationMinutes
+                        : null
+                );
 
                 setFormData((prev) =>
                     prev.preferredTime &&
@@ -274,7 +291,13 @@ export default function UserOnboardingForm() {
         loadAvailability();
 
         return () => controller.abort();
-    }, [formData.preferredDate]);
+    }, [
+        formData.preferredDate,
+        formData.cleaningType,
+        formData.homeSize,
+        formData.totalSqft,
+        selectedAddOnsKey,
+    ]);
 
     const pricing =
         formData.cleaningType && formData.homeSize
@@ -1278,6 +1301,21 @@ export default function UserOnboardingForm() {
                                 {isCheckingAvailability && (
                                     <p className="text-xs text-[#8f8778]">
                                         Checking live availability...
+                                    </p>
+                                )}
+
+                                {estimatedDurationMinutes && (
+                                    <p className="text-xs text-[#8f8778]">
+                                        Estimated service time:{" "}
+                                        {estimatedDurationMinutes >= 60
+                                            ? `${Math.floor(
+                                                  estimatedDurationMinutes / 60
+                                              )} hr${estimatedDurationMinutes >= 120 ? "s" : ""}${
+                                                  estimatedDurationMinutes % 60
+                                                      ? ` ${estimatedDurationMinutes % 60} min`
+                                                      : ""
+                                              }`
+                                            : `${estimatedDurationMinutes} min`}
                                     </p>
                                 )}
 
