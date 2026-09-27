@@ -54,6 +54,19 @@ model Booking {
   updatedAt DateTime @updatedAt
 }
 
+
+model BookingSlotHold {
+  id                String   @id @default(cuid())
+  preferredDate     DateTime
+  preferredTime     String
+  checkoutSessionId String?  @unique
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+
+  @@index([preferredDate, preferredTime])
+  @@index([expiresAt])
+}
+
 model ProfessionalProfile {
   id              String  @id @default(cuid())
   fullName        String
