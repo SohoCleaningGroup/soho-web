@@ -62,6 +62,9 @@ const checkoutSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let slotHoldId: string | null = null;
+  let checkoutSessionId: string | null = null;
+
   try {
     const rejected =
       rejectCrossOrigin(request) || rejectOversizedRequest(request, 32 * 1024);
@@ -99,9 +102,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // One-cleaner staging protection: prevent the same or adjacent 2-hour
-    // arrival window from being sold when an active booking already exists.
-    // Adjacent windows are blocked to preserve travel time between jobs.
+    // Capacity-aware staging protection. Adjacent 2-hour arrival windows are
+    // treated as conflicting so each cleaner has travel time between jobs.
+    // A short-lived database hold is created before Stripe Checkout opens,
+    // closing the race where two customers begin checkout at the same time.
     const dayStart = new Date(preferredDate);
     dayStart.setUTCHours(0, 0, 0, 0);
     const dayEnd = new Date(dayStart);
@@ -119,16 +123,57 @@ export async function POST(request: Request) {
       (_, index) => Math.abs(index - requestedSlotIndex) <= 1
     );
 
-    const conflictingBooking = await prisma.booking.findFirst({
-      where: {
-        preferredDate: { gte: dayStart, lt: dayEnd },
-        preferredTime: { in: [...blockedSlots] },
-        status: { in: ["PENDING", "CONFIRMED", "ASSIGNED"] },
-      },
-      select: { id: true },
+    const parsedCapacity = Number(process.env.CLEANING_BOOKING_CAPACITY || "1");
+    const bookingCapacity =
+      Number.isInteger(parsedCapacity) && parsedCapacity >= 1 && parsedCapacity <= 10
+        ? parsedCapacity
+        : 1;
+
+    const holdExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    const holdResult = await prisma.$transaction(async (tx) => {
+      // Serialize availability checks for the same service date so two
+      // near-simultaneous requests cannot both pass the capacity check.
+      await tx.$executeRaw`
+        SELECT pg_advisory_xact_lock(hashtext(${dayStart.toISOString()}))
+      `;
+
+      await tx.bookingSlotHold.deleteMany({
+        where: { expiresAt: { lte: new Date() } },
+      });
+
+      const [activeBookings, activeHolds] = await Promise.all([
+        tx.booking.count({
+          where: {
+            preferredDate: { gte: dayStart, lt: dayEnd },
+            preferredTime: { in: [...blockedSlots] },
+            status: { in: ["PENDING", "CONFIRMED", "ASSIGNED"] },
+          },
+        }),
+        tx.bookingSlotHold.count({
+          where: {
+            preferredDate: { gte: dayStart, lt: dayEnd },
+            preferredTime: { in: [...blockedSlots] },
+            expiresAt: { gt: new Date() },
+          },
+        }),
+      ]);
+
+      if (activeBookings + activeHolds >= bookingCapacity) {
+        return null;
+      }
+
+      return tx.bookingSlotHold.create({
+        data: {
+          preferredDate,
+          preferredTime: body.preferredTime,
+          expiresAt: holdExpiresAt,
+        },
+        select: { id: true },
+      });
     });
 
-    if (conflictingBooking) {
+    if (!holdResult) {
       return NextResponse.json(
         {
           success: false,
@@ -139,6 +184,8 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
+
+    slotHoldId = holdResult.id;
 
     const pricing = calculateCleaningPrice({
       cleaningType: body.cleaningType as CleaningType,
@@ -215,6 +262,18 @@ export async function POST(request: Request) {
       },
     });
 
+    checkoutSessionId = session.id;
+
+    try {
+      await prisma.bookingSlotHold.update({
+        where: { id: slotHoldId },
+        data: { checkoutSessionId: session.id },
+      });
+    } catch (error) {
+      await stripe.checkout.sessions.expire(session.id).catch(() => undefined);
+      throw error;
+    }
+
     const response = NextResponse.json({ success: true, url: session.url });
     response.cookies.set({
       name: PHONE_VERIFICATION_COOKIE,
@@ -227,6 +286,18 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (error) {
+    if (slotHoldId) {
+      await prisma.bookingSlotHold
+        .delete({ where: { id: slotHoldId } })
+        .catch(() => undefined);
+    }
+
+    if (checkoutSessionId) {
+      await stripe.checkout.sessions
+        .expire(checkoutSessionId)
+        .catch(() => undefined);
+    }
+
     console.error("CREATE_CHECKOUT_SESSION_ERROR", error);
     return NextResponse.json(
       { success: false, message: "Unable to create checkout session." },
