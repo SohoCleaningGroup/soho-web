@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { twilioClient, twilioVerifyServiceSid } from "@/lib/twilio";
+import { isPreviewSmsRecipientAllowed, twilioClient, twilioVerifyServiceSid } from "@/lib/twilio";
 import { normalizePhone } from "@/lib/security/phone-verification";
 import {
   getClientIp,
@@ -28,6 +28,13 @@ export async function POST(req: Request) {
     }
 
     const phone = normalizePhone(parsed.data.phone);
+    if (!isPreviewSmsRecipientAllowed(phone)) {
+      return NextResponse.json(
+        { success: false, message: "This number is not enabled for staging SMS." },
+        { status: 403 }
+      );
+    }
+
     const limited = rateLimit(
       `otp-send:${getClientIp(req)}:${phone}`,
       5,
