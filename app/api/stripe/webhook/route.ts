@@ -295,6 +295,14 @@ async function handleOriginalBooking({
 
       homeSize: metadata.homeSize,
 
+      totalSqft: parseOptionalInteger(
+        metadata.totalSqft
+      ),
+
+      estimatedDurationMinutes: parseOptionalInteger(
+        metadata.estimatedDurationMinutes
+      ),
+
       bedrooms: parseOptionalInteger(
         metadata.bedrooms
       ),
