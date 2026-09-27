@@ -109,6 +109,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const requestedDay = preferredDate.getUTCDay();
+    if (requestedDay === 0 || requestedDay === 6) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Bookings are available Monday through Friday.",
+        },
+        { status: 400 }
+      );
+    }
+
     const dayStart = new Date(preferredDate);
     dayStart.setUTCHours(0, 0, 0, 0);
     const dayEnd = new Date(dayStart);
