@@ -11,6 +11,16 @@ export const twilioVerifyServiceSid =
 export const twilioMessagingServiceSid =
   process.env.TWILIO_MESSAGING_SERVICE_SID!;
 
+export function isPreviewSmsRecipientAllowed(to: string) {
+  if (process.env.VERCEL_ENV !== "preview") return true;
+
+  const allowed = (process.env.STAGING_SMS_ALLOWED_NUMBERS ?? "")
+    .split(/[\s,]+/)
+    .filter(Boolean);
+
+  return allowed.includes(to);
+}
+
 export async function sendSms({
   to,
   body,
@@ -18,6 +28,11 @@ export async function sendSms({
   to: string;
   body: string;
 }) {
+  if (!isPreviewSmsRecipientAllowed(to)) {
+    console.warn("TWILIO_SMS_BLOCKED_PREVIEW");
+    return false;
+  }
+
   try {
     const message = await twilioClient.messages.create({
       messagingServiceSid: twilioMessagingServiceSid,
