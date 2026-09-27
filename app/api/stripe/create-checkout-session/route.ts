@@ -19,6 +19,13 @@ import {
 } from "@/lib/security/request";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import {
+  estimateCleaningDurationMinutes,
+  getBookingCapacity,
+  getTravelBufferMinutes,
+  isSlotAvailable,
+  type BookingTimeSlot,
+} from "@/lib/scheduling/booking-availability";
 
 const addOnOptions = [
   { id: "INSIDE_FRIDGE", label: "Inside Fridge Cleaning", price: 40 },
@@ -102,39 +109,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // Capacity-aware staging protection. Adjacent 2-hour arrival windows are
-    // treated as conflicting so each cleaner has travel time between jobs.
-    // A short-lived database hold is created before Stripe Checkout opens,
-    // closing the race where two customers begin checkout at the same time.
     const dayStart = new Date(preferredDate);
     dayStart.setUTCHours(0, 0, 0, 0);
     const dayEnd = new Date(dayStart);
     dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
 
-    const slots = [
-      "08:00-10:00",
-      "10:00-12:00",
-      "12:00-14:00",
-      "14:00-16:00",
-      "16:00-18:00",
-    ] as const;
-    const requestedSlotIndex = slots.indexOf(body.preferredTime);
-    const blockedSlots = slots.filter(
-      (_, index) => Math.abs(index - requestedSlotIndex) <= 1
-    );
-
-    const parsedCapacity = Number(process.env.CLEANING_BOOKING_CAPACITY || "1");
-    const bookingCapacity =
-      Number.isInteger(parsedCapacity) && parsedCapacity >= 1 && parsedCapacity <= 10
-        ? parsedCapacity
-        : 1;
+    const requestedDurationMinutes = estimateCleaningDurationMinutes({
+      cleaningType: body.cleaningType as CleaningType,
+      homeSize: body.homeSize as HomeSize,
+      totalSqft: body.totalSqft,
+      selectedAddOns: body.selectedAddOns,
+    });
+    const bookingCapacity = getBookingCapacity();
+    const travelBufferMinutes = getTravelBufferMinutes();
 
     const checkoutExpiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
     const holdExpiresAt = new Date((checkoutExpiresAt + 5 * 60) * 1000);
 
     const holdResult = await prisma.$transaction(async (tx) => {
-      // Serialize availability checks for the same service date so two
-      // near-simultaneous requests cannot both pass the capacity check.
+      // Serialize availability checks for this service date so two
+      // near-simultaneous customers cannot both claim the last crew slot.
       await tx.$executeRaw`
         SELECT pg_advisory_xact_lock(hashtext(${dayStart.toISOString()}))
       `;
@@ -144,23 +138,37 @@ export async function POST(request: Request) {
       });
 
       const [activeBookings, activeHolds] = await Promise.all([
-        tx.booking.count({
+        tx.booking.findMany({
           where: {
             preferredDate: { gte: dayStart, lt: dayEnd },
-            preferredTime: { in: [...blockedSlots] },
             status: { in: ["PENDING", "CONFIRMED", "ASSIGNED"] },
           },
+          select: {
+            preferredTime: true,
+            estimatedDurationMinutes: true,
+          },
         }),
-        tx.bookingSlotHold.count({
+        tx.bookingSlotHold.findMany({
           where: {
             preferredDate: { gte: dayStart, lt: dayEnd },
-            preferredTime: { in: [...blockedSlots] },
             expiresAt: { gt: new Date() },
+          },
+          select: {
+            preferredTime: true,
+            estimatedDurationMinutes: true,
           },
         }),
       ]);
 
-      if (activeBookings + activeHolds >= bookingCapacity) {
+      const available = isSlotAvailable({
+        requestedSlot: body.preferredTime as BookingTimeSlot,
+        requestedDurationMinutes,
+        intervals: [...activeBookings, ...activeHolds],
+        capacity: bookingCapacity,
+        travelBufferMinutes,
+      });
+
+      if (!available) {
         return null;
       }
 
@@ -168,6 +176,7 @@ export async function POST(request: Request) {
         data: {
           preferredDate,
           preferredTime: body.preferredTime,
+          estimatedDurationMinutes: requestedDurationMinutes,
           expiresAt: holdExpiresAt,
         },
         select: { id: true },
@@ -248,6 +257,7 @@ export async function POST(request: Request) {
         cleaningType: body.cleaningType,
         homeSize: body.homeSize,
         totalSqft: String(body.totalSqft),
+        estimatedDurationMinutes: String(requestedDurationMinutes),
         bedrooms: String(body.bedrooms),
         bathrooms: String(body.bathrooms),
         kitchens: String(body.kitchens),
