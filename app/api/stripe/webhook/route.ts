@@ -102,6 +102,10 @@ export async function POST(req: Request) {
     });
 
     if (existingPayment) {
+      await prisma.bookingSlotHold
+        .deleteMany({ where: { checkoutSessionId: session.id } })
+        .catch(() => undefined);
+
       console.log("STRIPE_WEBHOOK_DUPLICATE_SKIPPED", {
         checkoutSessionId: session.id,
         paymentIntentId,
@@ -345,6 +349,16 @@ async function handleOriginalBooking({
       payments: true,
     },
   });
+
+  await prisma.bookingSlotHold
+    .deleteMany({ where: { checkoutSessionId: sessionId } })
+    .catch((error) =>
+      console.warn("BOOKING_SLOT_HOLD_RELEASE_FAILED", {
+        checkoutSessionId: sessionId,
+        bookingId: booking.id,
+        error,
+      })
+    );
 
   console.log("STRIPE_BOOKING_CREATED", {
     bookingId: booking.id,
