@@ -244,15 +244,15 @@ export default function UserOnboardingForm() {
 
                 setUnavailableTimeSlots(unavailable);
 
-                if (
-                    formData.preferredTime &&
-                    unavailable.includes(formData.preferredTime)
-                ) {
-                    setFormData((prev) => ({
-                        ...prev,
-                        preferredTime: "",
-                    }));
-                }
+                setFormData((prev) =>
+                    prev.preferredTime &&
+                    unavailable.includes(prev.preferredTime)
+                        ? {
+                              ...prev,
+                              preferredTime: "",
+                          }
+                        : prev
+                );
             } catch (error) {
                 if (
                     error instanceof DOMException &&
@@ -274,7 +274,7 @@ export default function UserOnboardingForm() {
         loadAvailability();
 
         return () => controller.abort();
-    }, [formData.preferredDate, formData.preferredTime]);
+    }, [formData.preferredDate]);
 
     const pricing =
         formData.cleaningType && formData.homeSize
