@@ -24,7 +24,7 @@ Scope: replacement/staging only. Production/live site was not modified.
 - CLEANING_TRAVEL_BUFFER_MINUTES=60
 - Operating days: Monday-Friday
 - Operating hours: 8:00 AM-6:00 PM
-- Checkout hold/session window: 30 minutes (hold outlives session by 5 minutes)
+- Stripe Checkout window: 35 minutes; slot hold outlives it by 5 minutes
 
 ## Promotion gate
 
