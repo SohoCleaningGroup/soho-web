@@ -1791,6 +1791,10 @@ function DatePickerField({
                 selected={value}
                 onChange={onChange}
                 minDate={new Date()}
+                filterDate={(date) => {
+                    const day = date.getDay();
+                    return day !== 0 && day !== 6;
+                }}
                 placeholderText="Select preferred date"
                 dateFormat="MMMM d, yyyy"
                 className={inputClass}
