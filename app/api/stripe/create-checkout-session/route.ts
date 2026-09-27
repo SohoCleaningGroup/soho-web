@@ -129,7 +129,8 @@ export async function POST(request: Request) {
         ? parsedCapacity
         : 1;
 
-    const holdExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    const checkoutExpiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
+    const holdExpiresAt = new Date((checkoutExpiresAt + 5 * 60) * 1000);
 
     const holdResult = await prisma.$transaction(async (tx) => {
       // Serialize availability checks for the same service date so two
@@ -207,6 +208,7 @@ export async function POST(request: Request) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      expires_at: checkoutExpiresAt,
       payment_method_types: ["card"],
       payment_intent_data: {
         capture_method: "manual",
