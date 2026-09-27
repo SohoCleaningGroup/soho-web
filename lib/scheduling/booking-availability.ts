@@ -103,7 +103,7 @@ function slotStartMinutes(slot: string) {
 
 export type ScheduledInterval = {
   preferredTime: string | null;
-  durationMinutes: number | null;
+  estimatedDurationMinutes: number | null;
 };
 
 export function isSlotAvailable({
@@ -149,8 +149,9 @@ export function isSlotAvailable({
       if (existingStart === null) continue;
 
       const existingDuration =
-        interval.durationMinutes && interval.durationMinutes > 0
-          ? interval.durationMinutes
+        interval.estimatedDurationMinutes &&
+        interval.estimatedDurationMinutes > 0
+          ? interval.estimatedDurationMinutes
           : 120;
 
       const existingEnd =
