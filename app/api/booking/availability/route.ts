@@ -55,6 +55,17 @@ export async function GET(request: Request) {
     );
   }
 
+  const requestedDay = preferredDate.getUTCDay();
+  if (requestedDay === 0 || requestedDay === 6) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Bookings are available Monday through Friday.",
+      },
+      { status: 400 }
+    );
+  }
+
   if (
     !cleaningTypeValue ||
     !SUPPORTED_CLEANING_TYPES.has(cleaningTypeValue as CleaningType) ||
