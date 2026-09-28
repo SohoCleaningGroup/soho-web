@@ -18,6 +18,13 @@ const pool =
   new Pool({
     connectionString: databaseUrl,
 
+    // Supabase's staging connection is currently presenting a certificate chain
+    // that Node's pg driver does not trust in Vercel Preview. Keep this exception
+    // strictly limited to Preview so Production TLS verification is unchanged.
+    ...(process.env.VERCEL_ENV === "preview"
+      ? { ssl: { rejectUnauthorized: false } }
+      : {}),
+
     // Important for Vercel/serverless:
     // keep each function instance from opening many DB connections.
     max: 1,
