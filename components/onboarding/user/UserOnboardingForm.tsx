@@ -206,13 +206,8 @@ export default function UserOnboardingForm() {
     const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState<number | null>(null);
 
     const [countryCode, setCountryCode] = useState("+1");
-    const selectedAddOnsKey = formData.selectedAddOns.join(",");
-
     useEffect(() => {
         if (!formData.preferredDate) {
-            setUnavailableTimeSlots([]);
-            setAvailabilityError("");
-            setEstimatedDurationMinutes(null);
             return;
         }
 
@@ -296,7 +291,7 @@ export default function UserOnboardingForm() {
         formData.cleaningType,
         formData.homeSize,
         formData.totalSqft,
-        selectedAddOnsKey,
+        formData.selectedAddOns,
     ]);
 
     const pricing =
@@ -359,6 +354,17 @@ export default function UserOnboardingForm() {
             setOtpMessage("");
             setOtpError("");
         }
+    };
+
+    const updatePreferredDate = (date: Date | null) => {
+        setUnavailableTimeSlots([]);
+        setAvailabilityError("");
+        setEstimatedDurationMinutes(null);
+        setFormData((prev) => ({
+            ...prev,
+            preferredDate: date,
+            preferredTime: "",
+        }));
     };
 
     const nextStep = () => {
@@ -1265,15 +1271,7 @@ export default function UserOnboardingForm() {
                                     value={
                                         formData.preferredDate
                                     }
-                                    onChange={(date) =>
-                                        setFormData(
-                                            (prev) => ({
-                                                ...prev,
-                                                preferredDate:
-                                                    date,
-                                            })
-                                        )
-                                    }
+                                    onChange={updatePreferredDate}
                                 />
 
                                 <Select
