@@ -12,6 +12,37 @@ export const BOOKING_TIME_SLOTS = [
 
 export type BookingTimeSlot = (typeof BOOKING_TIME_SLOTS)[number];
 
+export function hasBookingSlotStarted(
+  preferredDate: Date,
+  preferredTime: BookingTimeSlot,
+  now = new Date()
+) {
+  const requestedDateKey = preferredDate.toISOString().slice(0, 10);
+  const nowParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const nowValues = Object.fromEntries(
+    nowParts.map(({ type, value }) => [type, value])
+  );
+  const todayKey = `${nowValues.year}-${nowValues.month}-${nowValues.day}`;
+  const requestedStartMinutes =
+    Number(preferredTime.slice(0, 2)) * 60 +
+    Number(preferredTime.slice(3, 5));
+  const currentMinutes =
+    Number(nowValues.hour) * 60 + Number(nowValues.minute);
+
+  return (
+    requestedDateKey < todayKey ||
+    (requestedDateKey === todayKey && requestedStartMinutes <= currentMinutes)
+  );
+}
+
 const BASE_DURATION_MINUTES: Record<
   CleaningType,
   Record<HomeSize, number>

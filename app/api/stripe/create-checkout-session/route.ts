@@ -23,6 +23,7 @@ import {
   estimateCleaningDurationMinutes,
   getBookingCapacity,
   getTravelBufferMinutes,
+  hasBookingSlotStarted,
   isSlotAvailable,
   type BookingTimeSlot,
 } from "@/lib/scheduling/booking-availability";
@@ -136,32 +137,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // The date picker sends a date at midnight. Compare the chosen time slot
-    // with the current New York date and time instead of rejecting all
-    // same-day bookings after midnight.
-    const requestedDateKey = preferredDate.toISOString().slice(0, 10);
-    const nowParts = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/New_York",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).formatToParts(new Date());
-    const nowValues = Object.fromEntries(
-      nowParts.map(({ type, value }) => [type, value])
-    );
-    const todayKey = `${nowValues.year}-${nowValues.month}-${nowValues.day}`;
-    const requestedStartMinutes =
-      Number(body.preferredTime.slice(0, 2)) * 60 +
-      Number(body.preferredTime.slice(3, 5));
-    const currentMinutes =
-      Number(nowValues.hour) * 60 + Number(nowValues.minute);
-    if (
-      requestedDateKey < todayKey ||
-      (requestedDateKey === todayKey && requestedStartMinutes <= currentMinutes)
-    ) {
+    if (hasBookingSlotStarted(preferredDate, body.preferredTime)) {
       return NextResponse.json(
         { success: false, message: "Select a future booking time." },
         { status: 400 }

@@ -5,6 +5,7 @@ import {
   estimateCleaningDurationMinutes,
   getBookingCapacity,
   getTravelBufferMinutes,
+  hasBookingSlotStarted,
   isSlotAvailable,
   BOOKING_TIME_SLOTS,
   type BookingTimeSlot,
@@ -131,6 +132,7 @@ export async function GET(request: Request) {
 
   const unavailableSlots = BOOKING_TIME_SLOTS.filter(
     (slot) =>
+      hasBookingSlotStarted(preferredDate, slot, now) ||
       !isSlotAvailable({
         requestedSlot: slot as BookingTimeSlot,
         requestedDurationMinutes,

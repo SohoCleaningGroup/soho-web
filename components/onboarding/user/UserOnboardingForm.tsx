@@ -459,6 +459,13 @@ export default function UserOnboardingForm() {
             window.location.assign(result.url);
         } catch (error) {
             console.error(error);
+            if (
+                error instanceof Error &&
+                error.message === "Select a future booking time."
+            ) {
+                setFormData((prev) => ({ ...prev, preferredTime: "" }));
+                setStep(4);
+            }
             alert(
                 error instanceof Error
                     ? error.message
