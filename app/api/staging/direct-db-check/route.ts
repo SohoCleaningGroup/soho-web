@@ -25,11 +25,11 @@ export async function GET() {
       connectionTimeoutMillis: 5000,
     });
     const result = await pool.query(
-      'select to_regclass(\'public."BookingSlotHold"\')::text as table_name'
+      'select to_regclass(\'public."BookingSlotHold"\') is not null as table_exists'
     );
     return NextResponse.json({
-      success: result.rows[0]?.table_name === "BookingSlotHold",
-    }, { status: result.rows[0]?.table_name === "BookingSlotHold" ? 200 : 503 });
+      success: result.rows[0]?.table_exists === true,
+    }, { status: result.rows[0]?.table_exists === true ? 200 : 503 });
   } catch {
     return NextResponse.json({ success: false }, { status: 503 });
   } finally {
