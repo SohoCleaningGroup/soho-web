@@ -13,15 +13,26 @@ const globalForPrisma = globalThis as unknown as {
   pgPool?: Pool;
 };
 
+const isPreview = process.env.VERCEL_ENV === "preview";
+const connectionString = (() => {
+  if (!isPreview) return databaseUrl;
+
+  // The staging DATABASE_URL currently carries an sslmode query parameter.
+  // node-postgres parses that parameter after the explicit ssl option and can
+  // force certificate verification again. Strip it in Preview, then provide
+  // the TLS behavior explicitly below. Production remains untouched.
+  const url = new URL(databaseUrl);
+  url.searchParams.delete("sslmode");
+  url.searchParams.delete("ssl");
+  return url.toString();
+})();
+
 const pool =
   globalForPrisma.pgPool ??
   new Pool({
-    connectionString: databaseUrl,
+    connectionString,
 
-    // Supabase's staging connection is currently presenting a certificate chain
-    // that Node's pg driver does not trust in Vercel Preview. Keep this exception
-    // strictly limited to Preview so Production TLS verification is unchanged.
-    ...(process.env.VERCEL_ENV === "preview"
+    ...(isPreview
       ? { ssl: { rejectUnauthorized: false } }
       : {}),
 
