@@ -86,8 +86,35 @@ export async function POST(request: Request) {
 
     const parsed = checkoutSchema.safeParse(await request.json());
     if (!parsed.success) {
+      const field = parsed.error.issues[0]?.path[0];
+      const labels: Record<string, string> = {
+        fullName: "your full name",
+        email: "your email address",
+        phone: "your phone number",
+        address: "the street address",
+        city: "the city",
+        state: "the state",
+        zipCode: "the ZIP code",
+        cleaningType: "the cleaning service",
+        homeSize: "the home size",
+        totalSqft: "the total square footage",
+        bedrooms: "the bedroom count",
+        bathrooms: "the bathroom count",
+        kitchens: "the kitchen count",
+        frequency: "the cleaning frequency",
+        preferredDate: "the booking date",
+        preferredTime: "the booking time",
+        selectedAddOns: "the add-ons",
+        specialNotes: "special notes",
+      };
+      const label = typeof field === "string" ? labels[field] : undefined;
       return NextResponse.json(
-        { success: false, message: "Please review your booking details." },
+        {
+          success: false,
+          message: label
+            ? `Please check ${label}.`
+            : "Please review your booking details.",
+        },
         { status: 400 }
       );
     }
@@ -102,9 +129,41 @@ export async function POST(request: Request) {
     }
 
     const preferredDate = body.preferredDate ? new Date(body.preferredDate) : null;
-    if (!preferredDate || preferredDate.getTime() < Date.now() - 60 * 60 * 1000) {
+    if (!preferredDate || Number.isNaN(preferredDate.getTime())) {
       return NextResponse.json(
         { success: false, message: "Select a valid future date." },
+        { status: 400 }
+      );
+    }
+
+    // The date picker sends a date at midnight. Compare the chosen time slot
+    // with the current New York date and time instead of rejecting all
+    // same-day bookings after midnight.
+    const requestedDateKey = preferredDate.toISOString().slice(0, 10);
+    const nowParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date());
+    const nowValues = Object.fromEntries(
+      nowParts.map(({ type, value }) => [type, value])
+    );
+    const todayKey = `${nowValues.year}-${nowValues.month}-${nowValues.day}`;
+    const requestedStartMinutes =
+      Number(body.preferredTime.slice(0, 2)) * 60 +
+      Number(body.preferredTime.slice(3, 5));
+    const currentMinutes =
+      Number(nowValues.hour) * 60 + Number(nowValues.minute);
+    if (
+      requestedDateKey < todayKey ||
+      (requestedDateKey === todayKey && requestedStartMinutes <= currentMinutes)
+    ) {
+      return NextResponse.json(
+        { success: false, message: "Select a future booking time." },
         { status: 400 }
       );
     }
