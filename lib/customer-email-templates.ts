@@ -8,6 +8,12 @@ type BookingCreatedEmailParams = {
   customerName: string;
   date: string;
   time: string;
+  bookingId: string;
+  service: string;
+  homeSize: string;
+  addOns: string[];
+  address: string;
+  authorizedAmount: number;
 };
 
 type PaymentCapturedEmailParams = {
@@ -56,13 +62,33 @@ export function getBookingCreatedEmail({
   customerName,
   date,
   time,
+  bookingId,
+  service,
+  homeSize,
+  addOns,
+  address,
+  authorizedAmount,
 }: BookingCreatedEmailParams): EmailTemplate {
   const subject =
     "Your cleaning is reserved — SoHo Cleaning Group";
 
+  const details: Array<[string, string]> = [
+    ["Booking reference", bookingId],
+    ["Service", service],
+    ["Home", homeSize],
+    ["Add-ons", addOns.length ? addOns.join(", ") : "None"],
+    ["Service address", address],
+    ["Date", date],
+    ["Preferred time", time],
+    ["Amount authorized", formatCurrency(authorizedAmount, "USD")],
+  ];
+
   const text = `Hi ${customerName},
 
-Your cleaning is reserved for ${date} at ${time}.
+Your cleaning is reserved. Our team will review the booking and prepare it for scheduling.
+
+Booking details
+${details.map(([label, value]) => `${label}: ${value}`).join("\n")}
 
 Your card has been authorized for the booking, but it has not been charged. Payment will be captured after your cleaning is completed.
 
@@ -80,6 +106,8 @@ SoHo Cleaning Group`;
         date
       )}</strong> at <strong>${escapeHtml(time)}</strong>.`
     )}
+
+    ${emailDetails(details)}
 
     ${infoBox(`
       <strong>Your card has been authorized, but not charged.</strong><br />
