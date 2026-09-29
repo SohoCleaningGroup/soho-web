@@ -14,22 +14,10 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const isPreview = process.env.VERCEL_ENV === "preview";
-if (isPreview) {
-  try {
-    const diagnosticUrl = new URL(databaseUrl);
-    console.log("PRISMA_PREVIEW_DB_HOST", diagnosticUrl.hostname);
-    console.log("PRISMA_PREVIEW_DB_USER", diagnosticUrl.username);
-  } catch {
-    console.log("PRISMA_PREVIEW_DB_HOST", "invalid-url");
-  }
-}
 const connectionString = (() => {
   if (!isPreview) return databaseUrl;
 
-  // The staging DATABASE_URL currently carries an sslmode query parameter.
-  // node-postgres parses that parameter after the explicit ssl option and can
-  // force certificate verification again. Strip it in Preview, then provide
-  // the TLS behavior explicitly below. Production remains untouched.
+  // In Preview, remove URL TLS options so the explicit pool setting applies.
   const url = new URL(databaseUrl);
   url.searchParams.delete("sslmode");
   url.searchParams.delete("ssl");
