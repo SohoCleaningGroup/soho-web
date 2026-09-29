@@ -109,10 +109,10 @@ npm install
 
 ## Setup environment variables
 
-Create:
+Create a local, ignored environment file:
 
 ```bash
-.env
+.env.local
 ```
 
 Add:
@@ -187,6 +187,13 @@ http://localhost:3000
 
 - Frontend: Vercel
 - Database: Supabase
+
+For replacement staging, deploy the `staging/vercel-replacement` branch to the
+`soho-cleaning-replacement` Vercel project's Preview environment. Scope staging
+Stripe test keys, webhook signing secret, Twilio credentials, and isolated
+Supabase connection URLs to that branch. After changing a Preview secret,
+create a new Preview deployment before testing checkout; earlier deployments
+retain their previous environment snapshot.
 
 ---
 
