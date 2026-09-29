@@ -73,11 +73,11 @@ const steps = [
 ];
 
 const timeSlots = [
-    { label: "8:00 AM - 10:00 AM", value: "08:00-10:00" },
-    { label: "10:00 AM - 12:00 PM", value: "10:00-12:00" },
-    { label: "12:00 PM - 2:00 PM", value: "12:00-14:00" },
-    { label: "2:00 PM - 4:00 PM", value: "14:00-16:00" },
-    { label: "4:00 PM - 6:00 PM", value: "16:00-18:00" },
+    { label: "8:00 AM start", value: "08:00-10:00" },
+    { label: "10:00 AM start", value: "10:00-12:00" },
+    { label: "12:00 PM start", value: "12:00-14:00" },
+    { label: "2:00 PM start", value: "14:00-16:00" },
+    { label: "4:00 PM start", value: "16:00-18:00" },
 ];
 
 const serviceOptions = [
@@ -1284,7 +1284,7 @@ export default function UserOnboardingForm() {
                                 />
 
                                 <Select
-                                    label="Preferred Time Slot"
+                                    label="Preferred Start Time"
                                     value={
                                         formData.preferredTime
                                     }
@@ -1325,6 +1325,19 @@ export default function UserOnboardingForm() {
                                             : `${estimatedDurationMinutes} min`}
                                     </p>
                                 )}
+
+                                <p className="text-xs text-[#8f8778]">
+                                    Times are cleaning start times in New York. Availability includes
+                                    the estimated cleaning duration and travel time between appointments.
+                                    Cleanings must finish by 6 PM.
+                                </p>
+                                {!isCheckingAvailability && !availabilityError &&
+                                    unavailableTimeSlots.length === timeSlots.length && (
+                                        <p className="text-sm text-amber-300">
+                                            No start times can fit this cleaning on the selected date.
+                                            Please choose another weekday.
+                                        </p>
+                                    )}
 
                                 {availabilityError && (
                                     <p className="text-xs text-amber-300">
@@ -1458,7 +1471,7 @@ export default function UserOnboardingForm() {
                                             ? formData.preferredDate.toDateString()
                                             : "Not selected"
                                     } · ${
-                                        formData.preferredTime ||
+                                        timeSlots.find((slot) => slot.value === formData.preferredTime)?.label ||
                                         "No time selected"
                                     }`}
                                 />
