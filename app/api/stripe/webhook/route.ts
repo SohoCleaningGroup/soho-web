@@ -11,6 +11,7 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import {
   calculateCleaningPrice,
+  getHomeSizeLabel,
   type CleaningType as PricingCleaningType,
   type HomeSize,
 } from "@/lib/pricing/cleaning-pricing";
@@ -405,7 +406,9 @@ async function handleOriginalBooking({
     : "your selected date";
 
   const bookingTime =
-    booking.preferredTime || "your selected time";
+    booking.preferredTime
+      ? formatBookingTime(booking.preferredTime)
+      : "your selected time";
 
   const customerNotification =
     await notifyBookingCreated({
@@ -416,15 +419,9 @@ async function handleOriginalBooking({
       time: bookingTime,
       bookingId: booking.id,
       service: readableLabel(booking.cleaningType),
-      homeSize: readableLabel(booking.homeSize),
+      homeSize: getHomeSizeLabel(booking.homeSize as HomeSize),
       addOns: booking.selectedAddOns.map(readableLabel),
-      address: [
-        booking.userProfile.address,
-        booking.userProfile.apartment,
-        booking.userProfile.city,
-        booking.userProfile.state,
-        booking.userProfile.zipCode,
-      ].filter(Boolean).join(", "),
+      address: formatCustomerAddress(booking.userProfile),
       authorizedAmount: stripeAmount,
     });
 
@@ -955,4 +952,42 @@ function readableLabel(value: string) {
     .replaceAll("_", " ")
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatBookingTime(slot: string) {
+  const match = /^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/.exec(slot);
+  if (!match) return slot;
+
+  const format = (hourValue: string, minute: string) => {
+    const hour = Number(hourValue);
+    return `${hour % 12 || 12}:${minute} ${hour < 12 ? "AM" : "PM"}`;
+  };
+
+  return `${format(match[1], match[2])}–${format(match[3], match[4])}`;
+}
+
+function formatCustomerAddress(customer: {
+  address?: string | null;
+  apartment?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+}) {
+  const apartment = customer.apartment?.trim();
+  const city = customer.city?.trim();
+  const displayCity = city && /^(ny|nyc|new york)$/i.test(city)
+    ? "New York"
+    : city;
+
+  return [
+    customer.address?.trim(),
+    apartment
+      ? /^(apt\.?|apartment|unit|suite|ste\.?|#)/i.test(apartment)
+        ? apartment
+        : `Apt ${apartment}`
+      : null,
+    displayCity,
+    customer.state?.trim().toUpperCase(),
+    customer.zipCode?.trim(),
+  ].filter(Boolean).join(", ");
 }
