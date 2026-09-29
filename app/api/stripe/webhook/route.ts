@@ -396,9 +396,12 @@ async function handleOriginalBooking({
   });
 
   const bookingDate = booking.preferredDate
-    ? booking.preferredDate.toLocaleDateString(
-      "en-US"
-    )
+    ? booking.preferredDate.toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
     : "your selected date";
 
   const bookingTime =
@@ -411,6 +414,18 @@ async function handleOriginalBooking({
       customerName: booking.userProfile.fullName,
       date: bookingDate,
       time: bookingTime,
+      bookingId: booking.id,
+      service: readableLabel(booking.cleaningType),
+      homeSize: readableLabel(booking.homeSize),
+      addOns: booking.selectedAddOns.map(readableLabel),
+      address: [
+        booking.userProfile.address,
+        booking.userProfile.apartment,
+        booking.userProfile.city,
+        booking.userProfile.state,
+        booking.userProfile.zipCode,
+      ].filter(Boolean).join(", "),
+      authorizedAmount: stripeAmount,
     });
 
   if (
@@ -932,4 +947,12 @@ async function releaseUnexpectedAuthorization({
       }
     );
   }
+}
+
+function readableLabel(value: string) {
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
