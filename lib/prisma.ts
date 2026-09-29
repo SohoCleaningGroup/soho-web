@@ -16,7 +16,9 @@ const globalForPrisma = globalThis as unknown as {
 const isPreview = process.env.VERCEL_ENV === "preview";
 if (isPreview) {
   try {
-    console.log("PRISMA_PREVIEW_DB_HOST", new URL(databaseUrl).hostname);
+    const diagnosticUrl = new URL(databaseUrl);
+    console.log("PRISMA_PREVIEW_DB_HOST", diagnosticUrl.hostname);
+    console.log("PRISMA_PREVIEW_DB_USER", diagnosticUrl.username);
   } catch {
     console.log("PRISMA_PREVIEW_DB_HOST", "invalid-url");
   }
