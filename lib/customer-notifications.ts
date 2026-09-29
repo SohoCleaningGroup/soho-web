@@ -46,14 +46,32 @@ export async function notifyBookingCreated({
     customerName,
     date,
     time,
+    bookingId,
+    service,
+    homeSize,
+    addOns,
+    address,
+    authorizedAmount,
 }: CustomerRecipient & {
     date: string;
     time: string;
+    bookingId: string;
+    service: string;
+    homeSize: string;
+    addOns: string[];
+    address: string;
+    authorizedAmount: number;
 }): Promise<NotificationResult> {
     const emailTemplate = getBookingCreatedEmail({
         customerName,
         date,
         time,
+        bookingId,
+        service,
+        homeSize,
+        addOns,
+        address,
+        authorizedAmount,
     });
 
     return sendCustomerNotification({
