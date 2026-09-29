@@ -460,7 +460,9 @@ export default function UserOnboardingForm() {
         } catch (error) {
             console.error(error);
             alert(
-                "Unable to open secure card authorization. Please try again."
+                error instanceof Error
+                    ? error.message
+                    : "Unable to open secure card authorization. Please try again."
             );
         } finally {
             setIsSubmitting(false);
