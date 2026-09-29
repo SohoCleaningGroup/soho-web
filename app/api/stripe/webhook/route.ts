@@ -963,7 +963,7 @@ function formatBookingTime(slot: string) {
     return `${hour % 12 || 12}:${minute} ${hour < 12 ? "AM" : "PM"}`;
   };
 
-  return `${format(match[1], match[2])}–${format(match[3], match[4])}`;
+  return `${format(match[1], match[2])} (start time, New York)`;
 }
 
 function formatCustomerAddress(customer: {
