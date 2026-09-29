@@ -14,7 +14,6 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const isPreview = process.env.VERCEL_ENV === "preview";
-if (isPreview) console.log("PRISMA_PREVIEW_DB_USER", new URL(databaseUrl).username);
 const connectionString = (() => {
   if (!isPreview) return databaseUrl;
 
