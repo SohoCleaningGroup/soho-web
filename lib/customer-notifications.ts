@@ -110,7 +110,7 @@ export async function notifyBookingStatusChanged({
     await reconcileReferral(bookingId).catch(error => console.error("REFERRAL_RECONCILE_FAILED", { bookingId, error }));
     let referralPortal: string | undefined;
     if (status.toUpperCase() === "COMPLETED") {
-        const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { userProfileId: true } });
+        const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { userProfileId: true } }).catch(error => { console.error("REFERRAL_ACCOUNT_LOOKUP_FAILED", { bookingId, error }); return null; });
         if (booking) {
             const account = await ensureReferralAccount(booking.userProfileId).catch(error => { console.error("REFERRAL_ACCOUNT_FAILED", { bookingId, error }); return null; });
             if (account) referralPortal = `${process.env.NEXT_PUBLIC_APP_URL}/referrals/${account.rewardCode}`;
