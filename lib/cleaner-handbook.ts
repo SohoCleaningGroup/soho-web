@@ -56,7 +56,7 @@ export const CLEANER_HANDBOOK_SECTIONS = [
   ] },
   { id: "growth", title: "Recognition, bonuses, and growth", points: [
     "We notice careful work, reliability, good communication, and the thoughtful finishing touches that make a customer feel well cared for. Going above and beyond still means working safely and within the booked service; ask SoHo before taking on a larger extra task.",
-    "SoHo plans performance bonuses for excellent customer feedback, including five-star scores in our private after-cleaning review. We will share the bonus amount, eligibility, and payment timing in writing before the program begins. Never pressure a customer for a particular rating or a public review.",
+    "SoHo offers a $10 quality bonus per qualifying completed job, shared equally among the cleaners assigned to that job. Complete the service checklist; SoHo checks the finished work using job photos and the customer's private approval or attention response when available. A missing customer response or public review alone does not disqualify the job. If an incomplete checklist item is documented, correct it so SoHo can verify the result. The bonus is paid through payroll on the first regular payday after verification. Never pressure a customer for a particular rating or a public review.",
     "Consistently strong work can also lead to more responsibility, training, and consideration for lead-cleaner roles as the team grows. Talk with SoHo about the work you enjoy and where you would like to grow.",
   ] },
   { id: "introductory-period", title: "Your first 90 days", points: [
