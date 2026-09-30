@@ -57,7 +57,9 @@ test('welcome email includes the handbook in HTML and plain text and escapes app
   const template = templates.getProfessionalApprovedEmail({ professionalName: '<script>unsafe</script>', handbookUrl: 'https://staging.example/professional/handbook', spanishHandbookUrl: 'https://staging.example/professional/handbook/es' });
   assert.match(template.subject, /approved/); assert.match(template.text, /https:\/\/staging.example\/professional\/handbook/);
   assert.match(template.html, /href="https:\/\/staging.example\/professional\/handbook"/);
-  assert.match(template.text, /https:\/\/staging.example\/professional\/handbook\/es/); assert.match(template.html, /Manual de limpieza/);
+  assert.match(template.text, /https:\/\/staging.example\/professional\/handbook\/es/); assert.match(template.html, /Cleaner Handbook — Spanish/);
+  assert.doesNotMatch(template.text, /En español|¡Buenas noticias!/);
+  assert.doesNotMatch(template.html, /lang="es"|¡Buenas noticias!/);
   assert.doesNotMatch(template.html, /<script>/); assert.match(template.html, /&lt;script&gt;/);
 });
 test('preview approval links use the staging branch, while production uses its configured URL', () => {

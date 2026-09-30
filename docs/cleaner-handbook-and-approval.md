@@ -2,7 +2,7 @@
 
 English handbook: /professional/handbook. Spanish handbook: /professional/handbook/es. Both use the same readable, printable layout with a language switch and contents links; both are noindex. They contain general team guidance, not applicant/customer information or employment/pay terms.
 
-When an admin changes an applicant to APPROVED, the API atomically claims the status change and sends a bilingual welcome email through the existing SendGrid sender. The email includes both language links; staging uses its Preview branch host, production uses NEXT_PUBLIC_APP_URL. Duplicate status requests do not automatically resend. Other statuses send no welcome email.
+When an admin changes an applicant to APPROVED, the API atomically claims the status change and sends an English welcome email through the existing SendGrid sender. The email includes links to both English and Spanish handbooks; staging uses its Preview branch host, production uses NEXT_PUBLIC_APP_URL. Duplicate status requests do not automatically resend. Other statuses send no welcome email.
 
 The admin view explains the email behavior, shows delivery results, and offers Resend approval email & handbook for approved cleaners. Email failure keeps the admin-approved status and clearly instructs the admin to retry. Approval does not assign a job or capture payment. Existing approved cleaners are not bulk-emailed.
 
