@@ -381,7 +381,9 @@ async function sendCustomerNotification({
 
             sendEmail({
                 to: [email],
-                subject: emailTemplate.subject,
+                subject: event === "BOOKING_STATUS_COMPLETED" && bookingId
+                    ? `${emailTemplate.subject} — Booking ${bookingId.slice(-8).toUpperCase()}`
+                    : emailTemplate.subject,
                 text: emailTemplate.text,
                 html: emailTemplate.html,
             }),
