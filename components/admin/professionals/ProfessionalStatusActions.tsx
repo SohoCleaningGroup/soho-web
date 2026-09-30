@@ -57,7 +57,7 @@ export default function ProfessionalStatusActions({
 
   return (
     <div>
-      <p className="mb-4 text-sm text-[#cfc7b7]">Approving a cleaner sends them a welcome email with their SoHo handbook.</p>
+      <p className="mb-4 text-sm text-[#cfc7b7]">Approving a cleaner sends their handbook and a private link to sign the hiring terms. Job invitations wait for the signature.</p>
       <div className="grid gap-3 sm:grid-cols-2">
       {buttons.map((button) => (
         <button

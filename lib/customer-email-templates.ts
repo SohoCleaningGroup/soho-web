@@ -612,7 +612,7 @@ SoHo Cleaning Group`;
   };
 }
 
-export function getProfessionalApprovedEmail({ professionalName, handbookUrl, spanishHandbookUrl }: { professionalName: string; handbookUrl: string; spanishHandbookUrl: string }): EmailTemplate {
+export function getProfessionalApprovedEmail({ professionalName, handbookUrl, spanishHandbookUrl, hiringTermsUrl }: { professionalName: string; handbookUrl: string; spanishHandbookUrl: string; hiringTermsUrl?: string | null }): EmailTemplate {
   const subject = "You’re approved — welcome to SoHo Cleaning Group!";
   const text = `Hi ${professionalName},
 
@@ -621,6 +621,7 @@ Good news: your cleaner application has been approved. We’re happy to welcome 
 Please read your SoHo Cleaner Handbook before your first assignment. Choose the language you prefer:
 English handbook: ${handbookUrl}
 Spanish handbook: ${spanishHandbookUrl}
+${hiringTermsUrl ? `\nBefore accepting an assignment, read and electronically sign your hiring terms here: ${hiringTermsUrl}\n` : ""}
 
 It covers preparing for a job, our cleaning standards, caring for customers’ homes, finished-job photos, and handling feedback.
 
@@ -632,7 +633,7 @@ Andy & the SoHo Cleaning Group team`;
   return { subject, text, html: emailLayout({
     eyebrow: "Welcome to the team",
     title: "Your application is approved!",
-    content: `${greeting(professionalName)}${paragraph("We’re happy to welcome you to SoHo Cleaning Group. Thank you for taking the time to apply!")}${paragraph("Please read your cleaner handbook before your first assignment. Choose the language you prefer. The guides cover preparation, cleaning standards, customer care, photos, and feedback.")}${button("Cleaner Handbook — English", handbookUrl)}${button("Cleaner Handbook — Spanish", spanishHandbookUrl)}${paragraph("Our team will coordinate the next steps, including preparation and job invitations. Approval does not assign a job automatically. Reply to this email with any questions or changes to your availability.")}${paragraph("We look forward to working with you.")}${paragraph("Andy &amp; the SoHo Cleaning Group team")}`,
+    content: `${greeting(professionalName)}${paragraph("We’re happy to welcome you to SoHo Cleaning Group. Thank you for taking the time to apply!")}${paragraph("Please read your cleaner handbook before your first assignment. Choose the language you prefer. The guides cover preparation, cleaning standards, customer care, photos, and feedback.")}${button("Cleaner Handbook — English", handbookUrl)}${button("Cleaner Handbook — Spanish", spanishHandbookUrl)}${hiringTermsUrl ? `${paragraph("Before accepting an assignment, read and electronically sign your hiring terms. You can read them in English or Spanish on the signing page. Your pay notice and other required notices are separate documents.")}${button("Read and sign hiring terms", hiringTermsUrl)}` : ""}${paragraph("Our team will coordinate the next steps, including preparation and job invitations. Approval does not assign a job automatically. Reply to this email with any questions or changes to your availability.")}${paragraph("We look forward to working with you.")}${paragraph("Andy &amp; the SoHo Cleaning Group team")}`,
   }) };
 }
 

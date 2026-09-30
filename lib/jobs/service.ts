@@ -55,6 +55,7 @@ export async function inviteWorker(bookingId: string, professionalId: string) {
     if (booking.jobAssignment?.status === "ACCEPTED" && booking.jobAssignment.professionalId !== professionalId) throw new Error("This booking already has an accepted worker. Contact the worker before reassigning.");
     const worker = await tx.professionalProfile.findUnique({ where: { id: professionalId } });
     if (!worker || worker.status !== "APPROVED") throw new Error("Choose an approved worker.");
+    if (!worker.hiringTermsSignedAt) throw new Error("The cleaner must sign the hiring terms before receiving a job assignment.");
     if (booking.jobAssignment?.status === "ACCEPTED") {
       return tx.jobAssignment.update({ where: { bookingId }, data: { tokenHash: tokenHash(token), expiresAt: new Date(Date.now() + JOB_LINK_SECONDS * 1000) }, include });
     }
@@ -75,7 +76,7 @@ export async function respondWorker(token: string, action: string) {
     const status = action === "accept" ? "ACCEPTED" : "DECLINED";
     if (job.status === status) return { bookingId: job.bookingId, changed: false, status };
     if (job.status !== "PENDING") throw new Error("You have already responded. Contact SoHo to change your response.");
-    if (job.professional.status !== "APPROVED") throw new Error("Contact SoHo about this assignment.");
+    if (job.professional.status !== "APPROVED" || !job.professional.hiringTermsSignedAt) throw new Error("Contact SoHo about this assignment.");
     await tx.jobAssignment.update({ where: { id: job.id }, data: { status, respondedAt: new Date() } });
     if (status === "ACCEPTED") await tx.booking.update({ where: { id: job.bookingId }, data: { status: "ASSIGNED" } });
     return { bookingId: job.bookingId, changed: true, status };

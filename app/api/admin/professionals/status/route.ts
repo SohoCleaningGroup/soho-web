@@ -24,7 +24,7 @@ export async function PATCH(req: Request) {
       const result = await prisma.professionalProfile.updateMany({ where: { id: body.professionalId, status: { not: body.status } }, data: { status: body.status } });
       changed = result.count > 0;
     }
-    const professional = await prisma.professionalProfile.findUnique({ where: { id: body.professionalId }, select: { id: true, fullName: true, email: true, status: true } });
+    const professional = await prisma.professionalProfile.findUnique({ where: { id: body.professionalId }, select: { id: true, fullName: true, email: true, status: true, hiringTermsSignedAt: true } });
     if (!professional) return NextResponse.json({ success: false, message: "Applicant not found." }, { status: 404 });
     if (body.resendApprovalEmail && professional.status !== ProfessionalStatus.APPROVED) return NextResponse.json({ success: false, message: "Approve this applicant before sending an approval email." }, { status: 409 });
     const shouldSend = professional.status === ProfessionalStatus.APPROVED && (changed || body.resendApprovalEmail === true);

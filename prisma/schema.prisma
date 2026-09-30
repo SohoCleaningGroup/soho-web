@@ -105,6 +105,16 @@ model ProfessionalProfile {
 
   screeningResponses Json?
 
+  hiringTermsTokenHash      String?   @unique
+  hiringTermsTokenExpiresAt DateTime?
+  hiringTermsSignedAt       DateTime?
+  hiringTermsSignedName     String?
+  hiringTermsVersion        String?
+  hiringTermsSnapshot       String?
+  hiringTermsHash           String?
+  hiringTermsIp             String?
+  hiringTermsUserAgent      String?
+
   bio    String?
   status ProfessionalStatus @default(PENDING)
 

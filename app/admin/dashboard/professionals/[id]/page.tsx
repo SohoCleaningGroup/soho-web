@@ -84,6 +84,14 @@ export default async function ProfessionalDetailPage({
               status={professional.idDocumentStatus || "NO_DOCUMENT"}
             />
           </div>
+          <p className="mt-5 text-sm text-[#cfc7b7]">Hiring terms: {professional.hiringTermsSignedAt
+            ? `Signed by ${professional.hiringTermsSignedName} on ${professional.hiringTermsSignedAt.toLocaleString("en-US", { timeZone: "America/New_York" })} (version ${professional.hiringTermsVersion})`
+            : "Not yet signed — job invitations are paused."}</p>
+          {professional.hiringTermsSnapshot && <details className="mt-3 text-left text-sm text-[#cfc7b7]">
+            <summary className="cursor-pointer text-[#e3bd74]">View exact signed terms</summary>
+            <p className="mt-3 break-all text-xs">SHA-256: {professional.hiringTermsHash}</p>
+            <pre className="mt-3 whitespace-pre-wrap font-sans leading-6">{professional.hiringTermsSnapshot}</pre>
+          </details>}
         </div>
 
         <div className="grid gap-6">
