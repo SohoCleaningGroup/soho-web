@@ -12,6 +12,8 @@ test('both signed languages state the agreed rates and weekly Friday payday', ()
   for (const text of [terms.CLEANER_HIRING_TERMS, terms.CLEANER_HIRING_TERMS_ES]) {
     assert.match(text, /\$25/); assert.match(text, /\$30/); assert.match(text, /\$35/);
     assert.match(text, /Friday|viernes/);
+    assert.match(text, /\$10/);
+    assert.match(text, /Missing customer feedback or a public review alone|La falta de comentarios del cliente o de una reseña pública por sí sola/);
     assert.match(text, /Monday through Sunday|lunes a domingo/);
   }
 });
