@@ -165,7 +165,7 @@ export default async function BookingDetailPage({
                         <InfoGrid
                             items={[
                                 ["Service", formatLabel(booking.cleaningType)],
-                                ["Home Size", booking.homeSize],
+                                ["Home Size", booking.homeSize.replace(/(\d+)\s*BHK/gi, "$1 BR")],
                                 ["Bedrooms", String(booking.bedrooms ?? 0)],
                                 ["Bathrooms", String(booking.bathrooms ?? 0)],
                                 ["Kitchen", String(booking.kitchens ?? 0)],
