@@ -186,7 +186,7 @@ ${address}
 
 Cleaning
 Service: ${serviceLabel}
-Home Size: ${booking.homeSize}
+Home Size: ${booking.homeSize.replace(/(\d+)\s*BHK/gi, "$1 BR")}
 Bedrooms: ${booking.bedrooms ?? 0}
 Bathrooms: ${booking.bathrooms ?? 0}
 Kitchen: ${booking.kitchens ?? 0}
@@ -267,7 +267,7 @@ function getAdminBookingEmailHtml({
 
           ${emailSection("Cleaning Details", [
             ["Service", serviceLabel],
-            ["Home Size", booking.homeSize],
+            ["Home Size", booking.homeSize.replace(/(\d+)\s*BHK/gi, "$1 BR")],
             ["Bedrooms", String(booking.bedrooms ?? 0)],
             ["Bathrooms", String(booking.bathrooms ?? 0)],
             ["Kitchen", String(booking.kitchens ?? 0)],
