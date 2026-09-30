@@ -67,8 +67,23 @@ test('preview approval links use the staging branch, while production uses its c
   const preview = load('lib/professional-approval.ts', mocks, { VERCEL_ENV: 'preview', VERCEL_BRANCH_URL: 'staging.example', NEXT_PUBLIC_APP_URL: 'https://live.example' });
   assert.equal(preview.cleanerHandbookUrl(), 'https://staging.example/professional/handbook');
   assert.equal(preview.cleanerHandbookUrl('es'), 'https://staging.example/professional/handbook/es');
+  assert.equal(preview.cleanerHandbookUrl('en', 'Ana María'), 'https://staging.example/professional/handbook?name=Ana+Mar%C3%ADa');
+  assert.equal(preview.cleanerHandbookUrl('es', 'Ana María'), 'https://staging.example/professional/handbook/es?name=Ana+Mar%C3%ADa');
   const production = load('lib/professional-approval.ts', mocks, { VERCEL_ENV: 'production', NEXT_PUBLIC_APP_URL: 'https://live.example' });
   assert.equal(production.cleanerHandbookUrl(), 'https://live.example/professional/handbook');
+});
+
+test('approval email sends personalized English and Spanish handbook links', async () => {
+  const sent = [];
+  const approval = load('lib/professional-approval.ts', {
+    'server-only': {},
+    '@/lib/sendgrid': { sendEmail: async message => { sent.push(message); return true; } },
+    '@/lib/customer-email-templates': templates,
+  }, { VERCEL_ENV: 'preview', VERCEL_BRANCH_URL: 'staging.example' });
+  assert.equal(await approval.sendCleanerApprovalEmail({ fullName: 'Ana María', email: 'ana@example.com' }), true);
+  assert.equal(sent.length, 1);
+  assert.match(sent[0].text, /handbook\?name=Ana\+Mar%C3%ADa/);
+  assert.match(sent[0].text, /handbook\/es\?name=Ana\+Mar%C3%ADa/);
 });
 
 test('both languages cover the same handbook sections and operational steps', () => {

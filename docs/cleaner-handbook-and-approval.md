@@ -1,6 +1,6 @@
 # Cleaner handbook and approval email — staging
 
-English handbook: /professional/handbook. Spanish handbook: /professional/handbook/es. Both use the same readable, printable layout with a language switch and contents links; both are noindex. They contain general team guidance, not applicant/customer information or employment/pay terms.
+English handbook: /professional/handbook. Spanish handbook: /professional/handbook/es. Both use the same readable, printable layout with a language switch and contents links; both are noindex. The approval email includes the cleaner's application name in each handbook link, and the pages display it at the top and in the sample introduction. Language switching retains the name. The shared URLs remain generic; the name parameter is display-only, so these links do not grant access to private applicant information. The handbooks contain general team guidance, not applicant/customer information or employment/pay terms.
 
 When an admin changes an applicant to APPROVED, the API atomically claims the status change and sends an English welcome email through the existing SendGrid sender. The email includes links to both English and Spanish handbooks; staging uses its Preview branch host, production uses NEXT_PUBLIC_APP_URL. Duplicate status requests do not automatically resend. Other statuses send no welcome email.
 

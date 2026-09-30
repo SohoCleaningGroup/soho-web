@@ -54,4 +54,14 @@ export const CLEANER_HANDBOOK_SECTIONS = [
     "Follow the agreed instructions for doors, lights, keys, and building access. Check that you have your equipment and have left the home secure.",
     "Update SoHo about anything the next visit should know. Keep customer details within the team’s approved channels and ask questions whenever you need support.",
   ] },
+  { id: "growth", title: "Recognition, bonuses, and growth", points: [
+    "We notice careful work, reliability, good communication, and the thoughtful finishing touches that make a customer feel well cared for. Going above and beyond still means working safely and within the booked service; ask SoHo before taking on a larger extra task.",
+    "SoHo plans performance bonuses for excellent customer feedback, including five-star scores in our private after-cleaning review. We will share the bonus amount, eligibility, and payment timing in writing before the program begins. Never pressure a customer for a particular rating or a public review.",
+    "Consistently strong work can also lead to more responsibility, training, and consideration for lead-cleaner roles as the team grows. Talk with SoHo about the work you enjoy and where you would like to grow.",
+  ] },
+  { id: "introductory-period", title: "Your first 90 days", points: [
+    "The first 90 days of employment are an introductory period for learning our standards and showing your cleaning skills, reliability, care for customers’ homes, and communication. SoHo will provide guidance and feedback as you settle in.",
+    "If performance or conduct does not meet expectations, SoHo may coach you, give a warning when appropriate, or end employment. A set number of warnings is not guaranteed. This period does not limit either your or SoHo’s rights under the written hiring terms and applicable law, and completing it does not guarantee continued employment.",
+    "If you need support, have a safety concern, or need to use protected time off, contact SoHo. We want concerns raised early and handle protected rights according to applicable law.",
+  ] },
 ] as const;

@@ -52,4 +52,14 @@ export const CLEANER_HANDBOOK_SECTIONS_ES = [
     "Sigue las instrucciones acordadas para las puertas, luces, llaves y acceso al edificio. Confirma que tienes tu equipo y que el hogar queda seguro.",
     "Informa a SoHo sobre cualquier detalle importante para la próxima visita. Comparte la información del cliente solo por los canales aprobados del equipo y pregunta cuando necesites apoyo.",
   ] },
+  { id: "growth", title: "Reconocimiento, bonos y crecimiento", points: [
+    "Valoramos el trabajo cuidadoso, la responsabilidad, la buena comunicación y los detalles que hacen que el cliente se sienta bien atendido. Ir más allá también significa trabajar con seguridad y dentro del servicio contratado; consulta con SoHo antes de asumir una tarea adicional grande.",
+    "SoHo planea ofrecer bonos por un servicio excelente, incluidos resultados de cinco estrellas en nuestra revisión privada después de la limpieza. Comunicaremos por escrito el monto del bono, los requisitos y la fecha de pago antes de iniciar el programa. Nunca presiones a un cliente para que dé una calificación determinada ni para que publique una reseña.",
+    "Un buen desempeño constante también puede abrir oportunidades de capacitación, más responsabilidades y consideración para puestos de líder del equipo a medida que crezcamos. Habla con SoHo sobre el trabajo que disfrutas y cómo te gustaría desarrollarte.",
+  ] },
+  { id: "introductory-period", title: "Tus primeros 90 días", points: [
+    "Los primeros 90 días de empleo son un período introductorio para aprender nuestros estándares y demostrar tus habilidades de limpieza, responsabilidad, cuidado de los hogares y comunicación. SoHo te dará orientación y comentarios mientras te adaptas.",
+    "Si tu desempeño o conducta no cumple las expectativas, SoHo puede orientarte, darte una advertencia cuando corresponda o terminar la relación laboral. No se garantiza un número fijo de advertencias. Este período no limita tus derechos ni los de SoHo conforme a los términos de contratación por escrito y la ley aplicable; completarlo tampoco garantiza la continuidad del empleo.",
+    "Si necesitas apoyo, tienes una preocupación de seguridad o necesitas usar tiempo libre protegido, comunícate con SoHo. Queremos que nos informes pronto de cualquier problema y respetamos los derechos protegidos por la ley.",
+  ] },
 ] as const;
