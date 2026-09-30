@@ -4,6 +4,7 @@ import {
   PaymentStatus,
 } from "@prisma/client";
 
+import { requireReviewApproval } from "@/lib/jobs/rules";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { notifyPaymentCaptured } from "@/lib/customer-notifications";
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
       },
       include: {
         userProfile: true,
+        jobAssignment: true,
         payments: {
           orderBy: [
             {
@@ -85,6 +87,11 @@ export async function POST(req: Request) {
         },
         { status: 404 }
       );
+    }
+
+    if (true) {
+      try { requireReviewApproval(booking.jobAssignment); }
+      catch (error) { return NextResponse.json({ success: false, message: (error as Error).message }, { status: 409 }); }
     }
 
     if (booking.status === BookingStatus.CANCELLED) {

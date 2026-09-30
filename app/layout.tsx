@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import SiteAnalytics from "@/components/SiteAnalytics";
+
 import "./globals.css";
 
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -76,8 +76,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col"
       >
         {children}
-        <Analytics />
-        <GoogleAnalytics gaId="G-GBDJ96C34C" />
+        <SiteAnalytics />
       </body>
     </html>
   );

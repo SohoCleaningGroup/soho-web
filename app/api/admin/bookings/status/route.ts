@@ -4,6 +4,7 @@ import {
   PaymentStatus,
 } from "@prisma/client";
 
+import { requireReviewApproval } from "@/lib/jobs/rules";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { notifyBookingStatusChanged } from "@/lib/customer-notifications";
@@ -59,6 +60,7 @@ export async function PATCH(req: Request) {
       },
       include: {
         userProfile: true,
+        jobAssignment: true,
         payments: {
           orderBy: {
             createdAt: "desc",
@@ -77,6 +79,14 @@ export async function PATCH(req: Request) {
       );
     }
 
+    if (nextStatus === BookingStatus.COMPLETED) {
+      try { requireReviewApproval(existingBooking.jobAssignment); }
+      catch (error) { return NextResponse.json({ success: false, message: (error as Error).message }, { status: 409 }); }
+    }
+
+    if (nextStatus === BookingStatus.ASSIGNED && existingBooking.jobAssignment?.status !== "ACCEPTED") {
+      return NextResponse.json({ success: false, message: "Assign an approved worker and wait for their acceptance first." }, { status: 409 });
+    }
     /*
      * Safely handle repeated status requests.
      */

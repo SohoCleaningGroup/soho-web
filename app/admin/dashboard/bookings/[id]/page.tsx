@@ -1,6 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { AdditionalAuthorizationStatus } from "@prisma/client";
 
+import Image from "next/image";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { PHOTO_BUCKET } from "@/lib/jobs/service";
+import JobAssignmentPanel from "@/components/admin/bookings/JobAssignmentPanel";
 import { prisma } from "@/lib/prisma";
 import BookingStatusActions from "@/components/admin/bookings/BookingStatusActions";
 import PaymentActions from "@/components/admin/payments/PaymentActions";
@@ -52,6 +56,7 @@ export default async function BookingDetailPage({
         },
         include: {
             userProfile: true,
+            jobAssignment: { include: { professional: true, photos: true } },
 
             payments: {
                 orderBy: [
@@ -76,6 +81,12 @@ export default async function BookingDetailPage({
         notFound();
     }
 
+    const workers = await prisma.professionalProfile.findMany({ where: { status: "APPROVED" }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } });
+
+    const jobPhotos = await Promise.all((booking.jobAssignment?.photos || []).map(async photo => {
+      const { data } = await getSupabaseAdmin().storage.from(PHOTO_BUCKET).createSignedUrl(photo.path, 600);
+      return data?.signedUrl || null;
+    }));
     const payments = booking.payments as BookingPayment[];
 
     const activeAuthorizedPayments = payments.filter(
@@ -121,6 +132,8 @@ export default async function BookingDetailPage({
 
     return (
         <section>
+            <JobAssignmentPanel bookingId={booking.id} workers={workers} current={booking.jobAssignment ? { workerId: booking.jobAssignment.professionalId, name: booking.jobAssignment.professional.fullName, status: booking.jobAssignment.status, reviewStatus: booking.jobAssignment.reviewStatus, reviewNote: booking.jobAssignment.reviewNote, photos: booking.jobAssignment.photos.length } : null} />
+            <div className="my-4 grid gap-4 sm:grid-cols-3">{jobPhotos.map((src, index) => src && <a href={src} key={src} target="_blank" rel="noreferrer"><Image unoptimized src={src} alt={`Job photo ${index + 1}`} width={600} height={600} className="h-auto w-full rounded-xl" /></a>)}</div>
             <div className="mb-10">
                 <p className="mb-3 text-xs font-medium uppercase tracking-[0.34em] text-[#b7924c]">
                     Booking Details

@@ -54,6 +54,8 @@ model Booking {
 
   status BookingStatus @default(PENDING)
 
+  jobAssignment JobAssignment?
+
   payments                 Payment[]
   additionalAuthorizations AdditionalAuthorization[]
 
@@ -76,6 +78,7 @@ model BookingSlotHold {
 }
 
 model ProfessionalProfile {
+  jobAssignments JobAssignment[]
   id              String  @id @default(cuid())
   fullName        String
   email           String  @unique
@@ -227,4 +230,34 @@ enum ProfessionalIdDocumentStatus {
   PENDING
   APPROVED
   REUPLOAD_REQUESTED
+}
+
+model JobAssignment {
+  id String @id @default(cuid())
+  bookingId String @unique
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  tokenHash String @unique
+  expiresAt DateTime
+  status String @default("PENDING")
+  respondedAt DateTime?
+  reviewTokenHash String? @unique
+  reviewExpiresAt DateTime?
+  reviewStatus String @default("NONE")
+  reviewNote String?
+  reviewedAt DateTime?
+  reviewSentAt DateTime?
+  photos JobPhoto[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([professionalId])
+}
+model JobPhoto {
+  id String @id @default(cuid())
+  assignmentId String
+  assignment JobAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  path String @unique
+  createdAt DateTime @default(now())
+  @@index([assignmentId])
 }
