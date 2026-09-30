@@ -1,3 +1,4 @@
+import { releaseReferral } from "@/lib/referrals/service";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
 
     // Never release a completed payment's reservation. Its webhook owns it.
     if (session.status === "expired") {
+      await releaseReferral({ checkoutSessionId: session.id });
       await prisma.bookingSlotHold.deleteMany({ where: { checkoutSessionId: session.id } });
     }
 

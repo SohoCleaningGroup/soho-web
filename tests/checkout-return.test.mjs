@@ -41,6 +41,7 @@ function route({ status = "open", token = true, concurrent = false, rejected = f
   const handler = load("app/api/stripe/return-from-checkout/route.ts", {
     "next/headers": { cookies: async () => ({ get: () => ({ value: "signed" }) }) },
     "next/server": { NextResponse: { json: (body, options) => ({ body, options, cookies: { set: (...args) => calls.push(["cookie", ...args]) } }) } },
+    "@/lib/referrals/service": { releaseReferral: async () => {} },
     "@/lib/prisma": { prisma: { bookingSlotHold: { deleteMany: async () => calls.push(["delete"]) } } },
     "@/lib/stripe": { stripe: { checkout: { sessions: {
       retrieve: async () => ({ id: "cs_test_owned", status }),

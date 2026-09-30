@@ -1,3 +1,5 @@
+import { GOOGLE_REVIEW_URL } from "@/lib/site";
+
 type EmailTemplate = {
   subject: string;
   text: string;
@@ -38,6 +40,7 @@ type AdditionalAuthorizationCompletedEmailParams = {
 };
 
 type BookingStatusEmailParams = {
+  referralPortal?: string;
   customerName: string;
   status: string;
 };
@@ -378,10 +381,12 @@ SoHo Cleaning Group`;
  */
 
 export function getBookingStatusEmail({
+  referralPortal,
   customerName,
   status,
 }: BookingStatusEmailParams): EmailTemplate {
   const normalizedStatus = status.toUpperCase();
+  if (normalizedStatus === "COMPLETED") return getCompletionReviewEmail(customerName, referralPortal);
 
   const statusContent: Record<
     string,
@@ -910,4 +915,20 @@ function escapeHtml(value: string) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+export function getCompletionReviewEmail(customerName: string, referralPortal?: string): EmailTemplate {
+  const firstName = customerName.trim().split(/\s+/)[0] || "there";
+  const thanks = "Thank you for choosing SoHo Cleaning Group. We hope your home feels fresh, comfortable, and ready to enjoy.";
+  const request = "We’d love to hear about your experience. A quick, honest Google review helps other neighbors get to know our small business—and means a lot to our team.";
+  const referralText = referralPortal ? `\n\nYour referral link and reward details: ${referralPortal}\nKeep this personal rewards link private; share the friend link shown on that page.` : "";
+  return {
+    subject: "Thank you for welcoming SoHo into your home",
+    text: `Hi ${firstName},\n\n${thanks}\n\n${request}\n\nShare your experience on Google: ${GOOGLE_REVIEW_URL}\n\nThank you for supporting SoHo!\n\nAndy & the SoHo Cleaning Group team${referralText}`,
+    html: emailLayout({ eyebrow: "Thank You", title: "Thank you for welcoming SoHo into your home", content: `${greeting(firstName)}${paragraph(thanks)}${paragraph(request)}${button("Share your experience on Google", GOOGLE_REVIEW_URL)}${paragraph("Thank you for supporting SoHo!")}${paragraph("Andy &amp; the SoHo Cleaning Group team")}${referralPortal ? button("Your referral link and rewards", referralPortal) + paragraph("Keep this personal rewards link private; share the friend link shown on that page.") : ""}` }),
+  };
+}
+
+// Prepared for a future approved SMS campaign; deliberately not connected to sendSms.
+export function getCompletionReviewSms() {
+  return `SoHo Cleaning Group: Thank you for choosing us today! We’d love your honest feedback. Share your experience on Google: ${GOOGLE_REVIEW_URL} Reply STOP to unsubscribe.`;
 }

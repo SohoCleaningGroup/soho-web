@@ -56,6 +56,7 @@ export default async function BookingDetailPage({
         },
         include: {
             userProfile: true,
+            referralUse: { include: { account: true } },
             jobAssignment: { include: { professional: true, photos: true } },
 
             payments: {
@@ -132,6 +133,7 @@ export default async function BookingDetailPage({
 
     return (
         <section>
+            {booking.referralUse && <div className="mb-6 rounded-2xl border border-[#8f6b2f] p-5"><h2 className="text-lg text-[#d6ab5f]">Referral discount</h2><p className="mt-2">${(booking.referralUse.discountCents / 100).toFixed(2)} · {booking.referralUse.kind.toLowerCase()} · {booking.referralUse.status.toLowerCase()}</p><p className="mt-2 text-sm">Capture the discounted amount. The original card authorization already includes this discount.</p></div>}
             <JobAssignmentPanel bookingId={booking.id} workers={workers} current={booking.jobAssignment ? { workerId: booking.jobAssignment.professionalId, name: booking.jobAssignment.professional.fullName, status: booking.jobAssignment.status, reviewStatus: booking.jobAssignment.reviewStatus, reviewNote: booking.jobAssignment.reviewNote, photos: booking.jobAssignment.photos.length } : null} />
             <div className="my-4 grid gap-4 sm:grid-cols-3">{jobPhotos.map((src, index) => src && <a href={src} key={src} target="_blank" rel="noreferrer"><Image unoptimized src={src} alt={`Job photo ${index + 1}`} width={600} height={600} className="h-auto w-full rounded-xl" /></a>)}</div>
             <div className="mb-10">

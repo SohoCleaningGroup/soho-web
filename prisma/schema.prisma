@@ -22,6 +22,7 @@ model UserProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  referralAccount ReferralAccount?
   bookings Booking[]
 }
 
@@ -54,6 +55,7 @@ model Booking {
 
   status BookingStatus @default(PENDING)
 
+  referralUse ReferralUse?
   jobAssignment JobAssignment?
 
   payments                 Payment[]
@@ -260,4 +262,34 @@ model JobPhoto {
   path String @unique
   createdAt DateTime @default(now())
   @@index([assignmentId])
+}
+
+model ReferralAccount {
+  id String @id @default(cuid())
+  userProfileId String @unique
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  code String @unique
+  rewardCode String @unique
+  uses ReferralUse[]
+  createdAt DateTime @default(now())
+}
+
+model ReferralUse {
+  id String @id @default(cuid())
+  accountId String
+  account ReferralAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  kind String
+  status String @default("RESERVED")
+  customerKey String? @unique
+  rewardSourceId String? @unique
+  rewardSource ReferralUse? @relation("RewardSource", fields: [rewardSourceId], references: [id], onDelete: Restrict)
+  rewardClaim ReferralUse? @relation("RewardSource")
+  bookingId String? @unique
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  checkoutSessionId String? @unique
+  discountCents Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([accountId, status])
 }

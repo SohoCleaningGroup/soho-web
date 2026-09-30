@@ -1,0 +1,8 @@
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { REFERRAL_TERMS } from "@/lib/referrals/rules";
+export const dynamic = "force-dynamic";
+export default async function AdminReferrals() {
+  const uses = await prisma.referralUse.findMany({ orderBy: { createdAt: "desc" }, take: 100, include: { account: { include: { userProfile: true } }, booking: { include: { userProfile: true } } } });
+  return <section><h1 className="font-serif text-4xl">Referrals</h1><p className="my-5 max-w-3xl text-[#cfc7b7]">{REFERRAL_TERMS}</p><p className="mb-5 text-sm text-[#cfc7b7]">Pending means checkout or an unpaid booking. Earned means the friend’s clean is completed and paid. Redeemed means the reward booking is completed and paid. Reserved reward bookings cannot reuse the same reward. Most recent 100 entries.</p><div className="overflow-x-auto"><table className="w-full text-left"><thead><tr>{["Referrer", "Customer", "Type", "Status", "Discount", "Booking"].map(h => <th key={h} className="border-b border-[#8f6b2f] p-3 text-[#d6ab5f]">{h}</th>)}</tr></thead><tbody>{uses.map(u => <tr key={u.id}><td className="p-3">{u.account.userProfile.fullName}</td><td className="p-3">{u.booking?.userProfile.fullName || "Checkout in progress"}</td><td className="p-3">{u.kind.toLowerCase()}</td><td className="p-3">{u.status.toLowerCase()}</td><td className="p-3">${(u.discountCents / 100).toFixed(2)}</td><td className="p-3">{u.bookingId ? <Link className="text-[#d6ab5f] underline" href={`/admin/dashboard/bookings/${u.bookingId}`}>View booking</Link> : "—"}</td></tr>)}</tbody></table>{!uses.length && <p className="mt-6">Referral activity will appear when a customer uses a code.</p>}</div></section>;
+}

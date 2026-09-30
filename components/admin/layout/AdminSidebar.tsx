@@ -8,6 +8,7 @@ const navItems = [
   { label: "Overview", href: "/admin/dashboard" },
   { label: "Bookings", href: "/admin/dashboard/bookings" },
   { label: "Professionals", href: "/admin/dashboard/professionals" },
+  { label: "Referrals", href: "/admin/dashboard/referrals" },
   { label: "Customers", href: "/admin/dashboard/customers" },
 ];
 

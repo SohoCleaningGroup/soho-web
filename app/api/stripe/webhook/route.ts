@@ -1,3 +1,4 @@
+import { bindReferral, releaseReferral } from "@/lib/referrals/service";
 import { NextResponse } from "next/server";
 import {
   AdditionalAuthorizationStatus,
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
 
     if (event.type === "checkout.session.expired") {
       const expiredSession = event.data.object;
+      await releaseReferral({ checkoutSessionId: expiredSession.id });
 
       await prisma.bookingSlotHold
         .deleteMany({ where: { checkoutSessionId: expiredSession.id } })
@@ -122,6 +124,7 @@ export async function POST(req: Request) {
     });
 
     if (existingPayment) {
+      await bindReferral(metadata.referralUseId, session.id, existingPayment.bookingId);
       await prisma.bookingSlotHold
         .deleteMany({ where: { checkoutSessionId: session.id } })
         .catch(() => undefined);
@@ -250,7 +253,7 @@ async function handleOriginalBooking({
   const addOnTotal = parseMoney(metadata.addOnTotal);
 
   const calculatedTotal = Number(
-    (pricing.total + addOnTotal).toFixed(2)
+    (pricing.total + addOnTotal - Number(metadata.referralDiscountCents || 0) / 100).toFixed(2)
   );
 
   const stripeAmount = getStripePaymentAmount(paymentIntent);
@@ -388,6 +391,8 @@ async function handleOriginalBooking({
         error,
       })
     );
+
+  await bindReferral(metadata.referralUseId, sessionId, booking.id);
 
   console.log("STRIPE_BOOKING_CREATED", {
     bookingId: booking.id,

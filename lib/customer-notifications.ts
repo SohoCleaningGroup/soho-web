@@ -1,3 +1,4 @@
+import { ensureReferralAccount, reconcileReferral } from "@/lib/referrals/service";
 import { prisma } from "@/lib/prisma";
 import { hasBookingSmsConsent } from "@/lib/messaging/sms-consent";
 import { sendEmail } from "@/lib/sendgrid";
@@ -106,9 +107,19 @@ export async function notifyBookingStatusChanged({
 }: CustomerRecipient & {
     status: string;
 }): Promise<NotificationResult> {
+    await reconcileReferral(bookingId).catch(error => console.error("REFERRAL_RECONCILE_FAILED", { bookingId, error }));
+    let referralPortal: string | undefined;
+    if (status.toUpperCase() === "COMPLETED") {
+        const booking = await prisma.booking.findUnique({ where: { id: bookingId }, select: { userProfileId: true } });
+        if (booking) {
+            const account = await ensureReferralAccount(booking.userProfileId).catch(error => { console.error("REFERRAL_ACCOUNT_FAILED", { bookingId, error }); return null; });
+            if (account) referralPortal = `${process.env.NEXT_PUBLIC_APP_URL}/referrals/${account.rewardCode}`;
+        }
+    }
     const emailTemplate = getBookingStatusEmail({
         customerName,
         status,
+        referralPortal,
     });
 
     return sendCustomerNotification({
@@ -138,6 +149,7 @@ export async function notifyPaymentCaptured({
     amount: number;
     currency?: string;
 }): Promise<NotificationResult> {
+    await reconcileReferral(bookingId).catch(error => console.error("REFERRAL_RECONCILE_FAILED", { bookingId, error }));
     const emailTemplate = getPaymentCapturedEmail({
         customerName,
         amount,

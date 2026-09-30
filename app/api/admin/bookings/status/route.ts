@@ -1,3 +1,4 @@
+import { releaseReferral } from "@/lib/referrals/service";
 import { NextResponse } from "next/server";
 import {
   BookingStatus,
@@ -263,6 +264,7 @@ export async function PATCH(req: Request) {
           });
         });
 
+      await releaseReferral({ bookingId: cancelledBooking.id });
       const [notificationResult] = await Promise.all([
         notifyBookingStatusChanged({
           bookingId: cancelledBooking.id,

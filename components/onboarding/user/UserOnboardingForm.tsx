@@ -13,6 +13,7 @@ import {
 } from "@/lib/pricing/cleaning-pricing";
 
 type FormData = {
+    referralCode: string;
     fullName: string;
     email: string;
     phone: string;
@@ -39,6 +40,7 @@ type FormData = {
 };
 
 const initialData: FormData = {
+    referralCode: "",
     fullName: "",
     email: "",
     phone: "",
@@ -189,9 +191,9 @@ const addOnOptions = [
     },
 ];
 
-export default function UserOnboardingForm() {
+export default function UserOnboardingForm({ initialReferralCode = "", isTestSite = false }: { initialReferralCode?: string; isTestSite?: boolean }) {
     const [step, setStep] = useState(0);
-    const [formData, setFormData] = useState<FormData>(initialData);
+    const [formData, setFormData] = useState<FormData>(() => ({ ...initialData, referralCode: initialReferralCode }));
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [otpCode, setOtpCode] = useState("");
@@ -207,6 +209,9 @@ export default function UserOnboardingForm() {
     const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState<number | null>(null);
 
     const [countryCode, setCountryCode] = useState("+1");
+    const [referralQuote, setReferralQuote] = useState<{ fingerprint: string; discountCents: number } | null>(null);
+    const [referralMessage, setReferralMessage] = useState("");
+    const [checkingReferral, setCheckingReferral] = useState(false);
     const [checkoutReturnMessage, setCheckoutReturnMessage] = useState("");
     const [isReturningFromCheckout, setIsReturningFromCheckout] = useState(false);
 
@@ -376,7 +381,21 @@ export default function UserOnboardingForm() {
         0
     );
 
-    const finalTotal = pricing ? pricing.total + addOnTotal : 0;
+    const referralFingerprint = JSON.stringify([formData.referralCode.trim().toUpperCase(), formData.email.toLowerCase(), countryCode + formData.phone.replace(/\s+/g, ""), formData.address, formData.apartment, formData.zipCode, pricing?.total]);
+    const referralDiscount = referralQuote?.fingerprint === referralFingerprint ? referralQuote.discountCents / 100 : 0;
+    const finalTotal = pricing ? Number((pricing.total + addOnTotal - referralDiscount).toFixed(2)) : 0;
+    const applyReferral = async () => {
+        const fingerprint = referralFingerprint;
+        setCheckingReferral(true); setReferralMessage(""); setReferralQuote(null);
+        try {
+            const response = await fetch("/api/referrals/quote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...formData, phone: normalizePhone() }) });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "Unable to apply this code.");
+            setReferralQuote({ fingerprint, discountCents: result.discountCents });
+            setReferralMessage(`Code applied: $${(result.discountCents / 100).toFixed(2)} off cleaning services.`);
+        } catch (error) { setReferralMessage(error instanceof Error ? error.message : "Unable to apply this code."); }
+        finally { setCheckingReferral(false); }
+    };
 
     const toggleAddOn = (addOnId: string) => {
         setFormData((prev) => {
@@ -476,6 +495,7 @@ export default function UserOnboardingForm() {
         try {
             setIsSubmitting(true);
 
+            if (formData.referralCode.trim() && !referralDiscount) throw new Error("Apply your referral or reward code before checkout, or clear it to continue without a discount.");
             // Close any unfinished checkout from a prior attempt before claiming a slot.
             const returned = await fetch("/api/stripe/return-from-checkout", { method: "POST" });
             const returnedResult = await returned.json();
@@ -671,6 +691,7 @@ export default function UserOnboardingForm() {
     return (
         <main className="min-h-screen bg-[#060606] px-4 py-10 text-white">
             <section className="mx-auto max-w-4xl">
+                {isTestSite && <p role="note" className="mb-8 rounded-xl border border-[#d6ab5f] p-4 text-sm text-[#e3bd74]">Test site: use Stripe test card 4242 4242 4242 4242 with any future expiry and three-digit CVC. Test emails and phone verification codes are real. Do not use a real payment card.</p>}
                 <div className="mb-10 text-center">
                     <p className="mb-4 text-xs font-medium uppercase tracking-[0.34em] text-[#b7924c]">
                         Cleaning Booking
@@ -1527,6 +1548,12 @@ export default function UserOnboardingForm() {
                                 />
                             </div>
 
+                            <div className="rounded-[24px] border border-[#8f6b2f]/50 p-5">
+                                <label htmlFor="referral-code" className="text-[#e3bd74]">Referral or reward code (optional)</label>
+                                <div className="mt-3 flex flex-wrap gap-3"><input id="referral-code" maxLength={60} value={formData.referralCode} onChange={event => { setFormData(prev => ({ ...prev, referralCode: event.target.value.toUpperCase() })); setReferralMessage(""); }} className="min-w-0 flex-1 rounded-xl border border-[#8f6b2f] bg-black px-4 py-3 text-white" /><button type="button" disabled={checkingReferral || !formData.referralCode.trim()} onClick={() => void applyReferral()} className="rounded-xl bg-[#d6ab5f] px-5 py-3 text-black disabled:opacity-50">{checkingReferral ? "Checking…" : "Apply code"}</button></div>
+                                <p className="mt-3 text-sm text-[#cfc7b7]">10% off cleaning services, capped at $30. One code per booking; cannot be combined with other discounts.</p>
+                                {referralMessage && <p role="status" className="mt-3 text-sm text-[#e3bd74]">{referralQuote && referralQuote.fingerprint !== referralFingerprint ? "Booking details changed. Apply your code again." : referralMessage}</p>}
+                            </div>
                             {pricing && (
                                 <div className="overflow-hidden rounded-[28px] border border-[#8f6b2f] bg-[#0c0a07]">
                                     <div className="border-b border-[#3a2812] px-6 py-5">
@@ -1592,6 +1619,7 @@ export default function UserOnboardingForm() {
                                             )
                                         )}
 
+                                        {referralDiscount > 0 && <SummaryRow label="Referral / reward discount" value={`−$${referralDiscount.toFixed(2)}`} />}
                                         <div className="border-t border-[#3a2812] pt-5">
                                             <div className="flex items-center justify-between gap-5">
                                                 <div>

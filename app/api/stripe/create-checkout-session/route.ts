@@ -1,3 +1,4 @@
+import { ReferralError, reserveReferral, releaseReferral } from "@/lib/referrals/service";
 import { BOOKING_SMS_CONSENT_VERSION } from "@/lib/messaging/sms-consent";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -35,6 +36,7 @@ const addOnOptions = [
 ] as const;
 
 const checkoutSchema = z.object({
+  referralCode: z.string().trim().max(60).default(""),
   fullName: z.string().trim().min(2).max(120),
   email: z.email().max(254).transform((value) => value.toLowerCase()),
   phone: z.string().regex(/^\+[1-9]\d{7,14}$/),
@@ -73,6 +75,7 @@ const checkoutSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let referralUseId: string | null = null;
   let slotHoldId: string | null = null;
   let checkoutSessionId: string | null = null;
 
@@ -88,6 +91,7 @@ export async function POST(request: Request) {
     );
     if (limited) return limited;
 
+    if (process.env.VERCEL_ENV === "preview" && !/^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY || "")) return NextResponse.json({ success: false, message: "Test checkout is unavailable until test payments are configured." }, { status: 503 });
     const parsed = checkoutSchema.safeParse(await request.json());
     if (!parsed.success) {
       const field = parsed.error.issues[0]?.path[0];
@@ -256,7 +260,9 @@ export async function POST(request: Request) {
       body.selectedAddOns.includes(addOn.id)
     );
     const addOnTotal = selectedAddOns.reduce((sum, addOn) => sum + addOn.price, 0);
-    const finalTotal = Number((pricing.total + addOnTotal).toFixed(2));
+    const referral = await reserveReferral(body.referralCode, { ...body, phone }, pricing.total, holdExpiresAt);
+    referralUseId = referral?.id || null;
+    const finalTotal = Number((pricing.total + addOnTotal - (referral?.discountCents || 0) / 100).toFixed(2));
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const addOnDescription = selectedAddOns.length
       ? ` Add-ons: ${selectedAddOns
@@ -267,7 +273,6 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       expires_at: checkoutExpiresAt,
-      payment_method_types: ["card"],
       payment_intent_data: {
         capture_method: "manual",
         metadata: { bookingFlow: "CARD_PREAUTHORIZATION" },
@@ -289,12 +294,14 @@ export async function POST(request: Request) {
             unit_amount: Math.round(finalTotal * 100),
             product_data: {
               name: `${pricing.serviceLabel} - ${pricing.homeSizeLabel}`,
-              description: `Included area: ${pricing.includedSqft} sqft. Total area: ${pricing.totalSqft} sqft.${addOnDescription}`,
+              description: `Included area: ${pricing.includedSqft} sqft. Total area: ${pricing.totalSqft} sqft.${addOnDescription}${referral ? ` Referral discount: $${(referral.discountCents / 100).toFixed(2)}.` : ""}`,
             },
           },
         },
       ],
       metadata: {
+        referralUseId: referral?.id || "",
+        referralDiscountCents: String(referral?.discountCents || 0),
         acceptedSmsConsent: String(body.acceptedSmsConsent),
         smsConsentAt: body.acceptedSmsConsent ? new Date().toISOString() : "",
         smsConsentVersion: body.acceptedSmsConsent ? BOOKING_SMS_CONSENT_VERSION : "",
@@ -327,6 +334,7 @@ export async function POST(request: Request) {
     });
 
     checkoutSessionId = session.id;
+    if (referral) await prisma.referralUse.update({ where: { id: referral.id }, data: { checkoutSessionId: session.id } });
 
     try {
       await prisma.bookingSlotHold.update({
@@ -351,18 +359,14 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (error) {
-    if (slotHoldId) {
-      await prisma.bookingSlotHold
-        .delete({ where: { id: slotHoldId } })
-        .catch(() => undefined);
-    }
-
+    let safeToRelease = !checkoutSessionId;
     if (checkoutSessionId) {
-      await stripe.checkout.sessions
-        .expire(checkoutSessionId)
-        .catch(() => undefined);
+      try { safeToRelease = (await stripe.checkout.sessions.expire(checkoutSessionId)).status === "expired"; }
+      catch { safeToRelease = await stripe.checkout.sessions.retrieve(checkoutSessionId).then(session => session.status === "expired").catch(() => false); }
     }
-
+    if (safeToRelease && slotHoldId) await prisma.bookingSlotHold.delete({ where: { id: slotHoldId } }).catch(() => undefined);
+    if (safeToRelease && referralUseId) await releaseReferral({ id: referralUseId }).catch(() => undefined);
+    if (error instanceof ReferralError) return NextResponse.json({ success: false, message: error.message }, { status: 400 });
     console.error("CREATE_CHECKOUT_SESSION_ERROR", error);
     return NextResponse.json(
       { success: false, message: "Unable to create checkout session." },

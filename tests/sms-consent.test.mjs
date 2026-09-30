@@ -40,6 +40,7 @@ function notificationHarness(saved, { databaseFails = false, smsFails = false } 
   const sent = [];
   const template = () => ({ subject: "booking", text: "booking", html: "booking" });
   const api = load("lib/customer-notifications.ts", {
+    "@/lib/referrals/service": { reconcileReferral: async () => {}, ensureReferralAccount: async () => null },
     "@/lib/prisma": { prisma: { booking: { findUnique: async ({ where }) => {
       assert.equal(where.id, "booking-1");
       if (databaseFails) throw new Error("database unavailable");
