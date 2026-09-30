@@ -1551,7 +1551,7 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                             <div className="rounded-[24px] border border-[#8f6b2f]/50 p-5">
                                 <label htmlFor="referral-code" className="text-[#e3bd74]">Referral or reward code (optional)</label>
                                 <div className="mt-3 flex flex-wrap gap-3"><input id="referral-code" maxLength={60} value={formData.referralCode} onChange={event => { setFormData(prev => ({ ...prev, referralCode: event.target.value.toUpperCase() })); setReferralMessage(""); }} className="min-w-0 flex-1 rounded-xl border border-[#8f6b2f] bg-black px-4 py-3 text-white" /><button type="button" disabled={checkingReferral || !formData.referralCode.trim()} onClick={() => void applyReferral()} className="rounded-xl bg-[#d6ab5f] px-5 py-3 text-black disabled:opacity-50">{checkingReferral ? "Checking…" : "Apply code"}</button></div>
-                                <p className="mt-3 text-sm text-[#cfc7b7]">10% off cleaning services, capped at $30. One code per booking; cannot be combined with other discounts.</p>
+                                <p className="mt-3 text-sm text-[#cfc7b7]">A friend code is for a new customer’s first clean. Your own private reward code works after a referred friend’s clean is completed and paid. Both offer 10% off cleaning services, capped at $30; one code per booking.</p>
                                 {referralMessage && <p role="status" className="mt-3 text-sm text-[#e3bd74]">{referralQuote && referralQuote.fingerprint !== referralFingerprint ? "Booking details changed. Apply your code again." : referralMessage}</p>}
                             </div>
                             {pricing && (
