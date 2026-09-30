@@ -1,0 +1,9 @@
+# Cleaner handbook and approval email — staging
+
+English handbook: /professional/handbook. Spanish handbook: /professional/handbook/es. Both use the same readable, printable layout with a language switch and contents links; both are noindex. They contain general team guidance, not applicant/customer information or employment/pay terms.
+
+When an admin changes an applicant to APPROVED, the API atomically claims the status change and sends a bilingual welcome email through the existing SendGrid sender. The email includes both language links; staging uses its Preview branch host, production uses NEXT_PUBLIC_APP_URL. Duplicate status requests do not automatically resend. Other statuses send no welcome email.
+
+The admin view explains the email behavior, shows delivery results, and offers Resend approval email & handbook for approved cleaners. Email failure keeps the admin-approved status and clearly instructs the admin to retry. Approval does not assign a job or capture payment. Existing approved cleaners are not bulk-emailed.
+
+Validation: seven focused tests cover a single approval send, other statuses and unauthorized requests, email failure, explicit approved-only resending, escaped email content, Preview/production links, and parity of handbook sections. TypeScript and focused ESLint passed. Notification tests use mocks; no real cleaner was approved and no actual email was sent during implementation.
