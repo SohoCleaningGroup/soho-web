@@ -8,6 +8,11 @@ export default function HiringTermsForm({ token, fullName, language }: { token: 
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [signed, setSigned] = useState(false);
+  if (signed) return <section role="status" className="mt-8 rounded-2xl border border-[#8f6b2f] bg-[#0a0a0a] p-8 text-center">
+    <h2 className="font-serif text-3xl text-[#d6ab5f]">{language === "es" ? "Gracias, recibimos tu firma" : "Thank you, your signature is recorded"}</h2>
+    <p className="mt-4 text-[#e8dfce]">{language === "es" ? "Completaste la firma de tus términos de contratación. Puedes cerrar esta página." : "You have completed your hiring terms. You can close this page."}</p>
+    <p className="mt-3 text-sm text-[#cfc7b7]">{language === "es" ? "Revisa tu correo para obtener una copia. Si no la recibes, comunícate con SoHo Cleaning Group." : "Check your email for a copy. If it does not arrive, contact SoHo Cleaning Group."}</p>
+  </section>;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true); setMessage("");
@@ -16,9 +21,7 @@ export default function HiringTermsForm({ token, fullName, language }: { token: 
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Unable to sign these terms.");
       setSigned(true);
-      setMessage(result.emailSent
-        ? language === "es" ? "Firmado. Enviamos una copia a tu correo electrónico." : "Signed. We emailed you a copy."
-        : language === "es" ? "Firmado. Comunícate con SoHo si no recibes tu copia por correo." : "Signed. Contact SoHo if your email copy does not arrive.");
+      window.location.replace(window.location.href);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Please try again."); }
     finally { setBusy(false); }
   }
