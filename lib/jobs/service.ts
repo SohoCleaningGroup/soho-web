@@ -39,11 +39,11 @@ function emailHtml(text: string) {
 export async function sendJobEmail(to: string[], subject: string, text: string) {
   return sendEmail({ to, subject: `SoHo Cleaning Group — ${subject}`, text, html: emailHtml(text) });
 }
-export async function notifyJobOwner(bookingId: string, message: string) {
+export async function notifyJobOwner(bookingId: string, message: string, feedback?: string) {
   const to = (process.env.ADMIN_NOTIFICATION_EMAILS || "").split(",").map(x => x.trim()).filter(Boolean);
   if (!to.length) return false;
   const url = jobBaseUrl() || "";
-  return sendJobEmail(to, message, `${message}\nBooking: ${bookingId}\n${url}/admin/dashboard/bookings/${bookingId}`);
+  return sendJobEmail(to, message, `${message}\nBooking: ${bookingId}${feedback ? `\nCustomer feedback: ${feedback}` : ""}\nManage this booking in admin:\n${url}/admin/dashboard/bookings/${bookingId}`);
 }
 export async function inviteWorker(bookingId: string, professionalId: string) {
   const token = newJobToken(); const link = jobUrl("jobs", token);
@@ -63,8 +63,11 @@ export async function inviteWorker(bookingId: string, professionalId: string) {
     return tx.jobAssignment.upsert({ where: { bookingId }, create: { bookingId, ...data }, update: data, include });
   });
   const date = job.booking.preferredDate?.toLocaleDateString("en-US", { timeZone: "America/New_York" }) || "To be confirmed";
-  const emailSent = await sendJobEmail([job.professional.email], "Cleaning assignment", `Hello ${job.professional.fullName},\nYou have been offered a ${job.booking.cleaningType.replaceAll("_", " ").toLowerCase()} cleaning on ${date} at ${job.booking.preferredTime || "a time to be confirmed"}.\nOpen your job page to accept or decline:\n${link}\nThis private link expires in 14 days. Do not forward it.`);
-  return { emailSent };
+  const followUp = job.status === "ACCEPTED" && job.reviewStatus === "ATTENTION";
+  const emailSent = await sendJobEmail([job.professional.email], followUp ? "Please address the customer's cleaning feedback" : "Cleaning assignment", followUp
+    ? `Hello ${job.professional.fullName},\nThe customer has asked us to address something on this cleaning.\nCustomer feedback: ${job.reviewNote || "Please contact SoHo for the details."}\nOpen your private job page:\n${link}\nAddress the feedback, upload photos showing the follow-up work, then select Cleaning nearly done — send review so the customer can review again.\nThe booking remains on hold for completion and payment capture until the customer approves.\nThis private link expires in 14 days. Do not forward it.`
+    : `Hello ${job.professional.fullName},\nYou have been offered a ${job.booking.cleaningType.replaceAll("_", " ").toLowerCase()} cleaning on ${date} at ${job.booking.preferredTime || "a time to be confirmed"}.\nOpen your job page to accept or decline:\n${link}\nThis private link expires in 14 days. Do not forward it.`);
+  return { emailSent, followUp };
 }
 export async function respondWorker(token: string, action: string) {
   const result = await lockedJob(token, false, async (tx, job) => {
@@ -81,14 +84,16 @@ export async function respondWorker(token: string, action: string) {
 }
 export async function requestCustomerReview(token: string) {
   const reviewToken = newJobToken(); const link = jobUrl("review", reviewToken);
-  const job = await lockedJob(token, false, async (tx, job) => {
+  const { job, previousReviewStatus } = await lockedJob(token, false, async (tx, job) => {
     if (!canUpload(job.status, job.reviewStatus)) throw new Error("This job is not ready for another review request.");
     if (!job.photos.length) throw new Error("Upload at least one finished-job photo first.");
-    return tx.jobAssignment.update({ where: { id: job.id }, data: { reviewTokenHash: tokenHash(reviewToken), reviewExpiresAt: new Date(Date.now() + JOB_LINK_SECONDS * 1000), reviewStatus: "AWAITING", reviewNote: null, reviewedAt: null, reviewSentAt: null }, include });
+    const previousReviewStatus = job.reviewStatus;
+    const updated = await tx.jobAssignment.update({ where: { id: job.id }, data: { reviewTokenHash: tokenHash(reviewToken), reviewExpiresAt: new Date(Date.now() + JOB_LINK_SECONDS * 1000), reviewStatus: "AWAITING", reviewNote: job.reviewNote, reviewedAt: null, reviewSentAt: null }, include });
+    return { job: updated, previousReviewStatus };
   });
   const emailSent = await sendJobEmail([job.booking.userProfile.email], "Your cleaning is nearly done — review the photos", `Hello ${job.booking.userProfile.fullName},\nYour cleaner has uploaded photos of the finished cleaning. Please review them and choose Everything looks good or Something needs attention:\n${link}\nLet us know about anything that needs attention before we finalize the job. Your response does not charge your card; SoHo reviews it before capturing payment.\nThis private link expires in 14 days.`);
   if (!emailSent) {
-    await prisma.jobAssignment.updateMany({ where: { id: job.id, reviewTokenHash: tokenHash(reviewToken), reviewStatus: "AWAITING" }, data: { reviewStatus: "NONE", reviewTokenHash: null, reviewExpiresAt: null } });
+    await prisma.jobAssignment.updateMany({ where: { id: job.id, reviewTokenHash: tokenHash(reviewToken), reviewStatus: "AWAITING" }, data: { reviewStatus: previousReviewStatus, reviewTokenHash: null, reviewExpiresAt: null } });
   } else {
     await prisma.jobAssignment.updateMany({ where: { id: job.id, reviewTokenHash: tokenHash(reviewToken) }, data: { reviewSentAt: new Date() } });
     await notifyJobOwner(job.bookingId, "Cleaning is nearly done — customer review requested");
@@ -101,7 +106,7 @@ export async function respondCustomer(token: string, action: string, note: strin
     if (action !== "approve" && action !== "attention") throw new Error("Choose a review response.");
     if (note.length > 2000 || (action === "attention" && !note.trim())) throw new Error("Describe what needs attention (up to 2,000 characters).");
     await tx.jobAssignment.update({ where: { id: job.id }, data: { reviewStatus: action === "approve" ? "APPROVED" : "ATTENTION", reviewNote: note.trim() || null, reviewedAt: new Date() } });
-    return job.bookingId;
+    return { bookingId: job.bookingId, feedback: note.trim() };
   });
-  await notifyJobOwner(result, action === "approve" ? "Customer approved the cleaning review" : "Customer says the cleaning needs attention");
+  await notifyJobOwner(result.bookingId, action === "approve" ? "Customer approved the cleaning review" : "Customer says the cleaning needs attention", result.feedback);
 }

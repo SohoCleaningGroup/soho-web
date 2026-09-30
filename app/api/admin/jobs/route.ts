@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const { bookingId, professionalId } = await request.json();
     if (typeof bookingId !== "string" || typeof professionalId !== "string") throw new Error("Choose a booking and worker.");
     const result = await inviteWorker(bookingId, professionalId);
-    return NextResponse.json({ success: true, message: result.emailSent ? "Worker invitation emailed." : "Assignment saved but email was not accepted. Retry the invitation.", ...result });
+    return NextResponse.json({ success: true, message: result.emailSent ? (result.followUp ? "Customer feedback and job link emailed to the cleaner." : "Worker invitation emailed.") : "Assignment saved but email was not accepted. Retry the invitation.", ...result });
   } catch (error) {
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Unable to assign worker." }, { status: 400 });
   }
