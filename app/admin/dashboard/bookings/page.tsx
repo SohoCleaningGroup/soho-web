@@ -91,7 +91,7 @@ export default async function AdminBookingsPage() {
 
                                         <TableCell>
                                             <div className="text-sm text-[#d8d0c1]">
-                                                <p>{booking.homeSize}</p>
+                                                <p>{booking.homeSize.replace(/(\d+)\s*BHK/gi, "$1 BR")}</p>
                                                 <p className="mt-1 text-xs text-[#8f8778]">
                                                     {booking.bedrooms ?? 0} Bed ·{" "}
                                                     {booking.bathrooms ?? 0} Bath ·{" "}
