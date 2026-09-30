@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { CLEANER_APPLICATION_QUESTIONS, KITCHEN_SCENARIO_QUESTION, type CleanerQuestionId } from "@/lib/cleaner-application-questions";
 
 type IdDocumentType = "NATIONAL_ID" | "PASSPORT" | "";
 
@@ -18,6 +19,8 @@ type FormData = {
     hasOwnSupplies: boolean;
     hasTransport: boolean;
     bio: string;
+    screeningAnswers: Partial<Record<CleanerQuestionId, boolean>>;
+    kitchenScenarioAnswer: string;
 
     idDocumentType: IdDocumentType;
     idDocumentFrontUrl: string;
@@ -36,13 +39,15 @@ const initialData: FormData = {
     hasOwnSupplies: false,
     hasTransport: false,
     bio: "",
+    screeningAnswers: {},
+    kitchenScenarioAnswer: "",
 
     idDocumentType: "",
     idDocumentFrontUrl: "",
     idDocumentBackUrl: "",
 };
 
-const steps = ["Personal", "Services", "Availability", "ID Document", "Review"];
+const steps = ["About you", "Your skills", "Availability", "A few questions", "ID documents", "Review"];
 
 const serviceOptions = [
     "SOHO_SIGNATURE",
@@ -58,8 +63,6 @@ const availabilityOptions = [
     "WEDNESDAY",
     "THURSDAY",
     "FRIDAY",
-    "SATURDAY",
-    "SUNDAY",
 ];
 
 export default function ProfessionalOnboardingForm() {
@@ -183,7 +186,12 @@ export default function ProfessionalOnboardingForm() {
             return;
         }
 
-        if (step === 3) {
+        if (step === 3 && (CLEANER_APPLICATION_QUESTIONS.some(item => typeof formData.screeningAnswers[item.id] !== "boolean") || formData.kitchenScenarioAnswer.trim().length < 10)) {
+            alert("Please choose Yes or No for each question and tell us how you would handle the kitchen scenario (at least 10 characters).");
+            return;
+        }
+
+        if (step === 4) {
             if (!formData.idDocumentType) {
                 alert("Please select ID document type.");
                 return;
@@ -326,7 +334,7 @@ export default function ProfessionalOnboardingForm() {
 
                         <p className="mt-4 text-[#cfc7b7]">
                             Thank you for applying to join SoHo Cleaning Group. Our team will
-                            review your profile and contact you shortly.
+                            review your application and reach out about next steps if there’s a good match. We appreciate the time you took to tell us about yourself.
                         </p>
 
                         <Link
@@ -346,7 +354,7 @@ export default function ProfessionalOnboardingForm() {
             <section className="mx-auto max-w-4xl">
                 <div className="mb-10 text-center">
                     <p className="mb-4 text-xs font-medium uppercase tracking-[0.34em] text-[#b7924c]">
-                        Professional Onboarding
+                        Come work with us
                     </p>
 
                     <h1 className="font-serif text-4xl text-white sm:text-5xl">
@@ -354,11 +362,11 @@ export default function ProfessionalOnboardingForm() {
                     </h1>
 
                     <p className="mx-auto mt-4 max-w-2xl text-[#d6d0c5]">
-                        Tell us about your experience, service areas, and availability.
+                        We’re looking for caring, dependable people who take pride in a job well done. Tell us a little about yourself, the homes you’ve cleaned, and when you’re available. We’d love to get to know you.
                     </p>
                 </div>
 
-                <div className="mb-8 grid grid-cols-5 gap-3">
+                <div className="mb-8 grid grid-cols-3 gap-3 sm:grid-cols-6">
                     {steps.map((item, index) => (
                         <div key={item}>
                             <div
@@ -483,7 +491,7 @@ export default function ProfessionalOnboardingForm() {
                                     {serviceOptions.map((service) => (
                                         <CheckboxCard
                                             key={service}
-                                            label={formatLabel(service)}
+                                            label={service === "SOHO_SIGNATURE" ? "Standard home cleaning" : service === "SOHO_SIGNATURE_DEEP" ? "Deep cleaning" : service === "MOVE_IN_MOVE_OUT" ? "Move-in / move-out cleaning" : service === "RECURRING" ? "Recurring home cleaning" : "Airbnb turnover cleaning"}
                                             checked={formData.servicesOffered.includes(service)}
                                             onClick={() => toggleArrayValue("servicesOffered", service)}
                                         />
@@ -520,7 +528,7 @@ export default function ProfessionalOnboardingForm() {
                         <div className="grid gap-6">
                             <div>
                                 <p className="mb-3 text-sm font-medium text-[#d8d0c1]">
-                                    Select your available days
+                                    Which weekdays usually work for you?
                                 </p>
 
                                 <div className="grid gap-3 md:grid-cols-2">
@@ -535,16 +543,40 @@ export default function ProfessionalOnboardingForm() {
                                 </div>
                             </div>
 
+
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="grid gap-6">
+                            <div>
+                                <h2 className="font-serif text-3xl">Let’s get to know your work style</h2>
+                                <p className="mt-3 text-sm leading-7 text-[#cfc7b7]">Choose Yes or No for each question. Please answer honestly: a “No” does not automatically rule you out. You can add context in the optional box below.</p>
+                            </div>
+                            {CLEANER_APPLICATION_QUESTIONS.map((item, index) => (
+                                <fieldset key={item.id} className="rounded-2xl border border-[#2f291d] bg-[#111111] p-5">
+                                    <legend className="px-2 text-sm leading-6 text-[#f3eadb]">{index + 1}. {item.question}</legend>
+                                    <div className="mt-2 flex gap-3">
+                                        {[true, false].map(answer => (
+                                            <label key={String(answer)} className={`flex min-h-12 flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${formData.screeningAnswers[item.id] === answer ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]" : "border-[#5b5141] text-white"}`}>
+                                                <input type="radio" name={`screening-${item.id}`} checked={formData.screeningAnswers[item.id] === answer} onChange={() => updateField("screeningAnswers", { ...formData.screeningAnswers, [item.id]: answer })} className="h-5 w-5 accent-[#d6ab5f]" />
+                                                {answer ? "Yes" : "No"}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </fieldset>
+                            ))}
+                            <Textarea label={KITCHEN_SCENARIO_QUESTION} placeholder="Tell us what you would do and why, in your own words." value={formData.kitchenScenarioAnswer} onChange={value => updateField("kitchenScenarioAnswer", value)} maxLength={1500} />
                             <Textarea
-                                label="Short Bio / Work Background"
-                                placeholder="Tell us briefly about your cleaning experience, work style, and customer service approach."
+                                label="Anything else you’d like us to know? (optional)"
+                                placeholder="Tell us about past jobs, what you enjoy about cleaning, or anything you’d like to explain about your answers."
                                 value={formData.bio}
                                 onChange={(value) => updateField("bio", value)}
                             />
                         </div>
                     )}
 
-                    {step === 3 && (
+                    {step === 4 && (
                         <div className="grid gap-6">
                             <div>
                                 <p className="mb-3 text-sm font-medium text-[#d8d0c1]">
@@ -608,7 +640,7 @@ export default function ProfessionalOnboardingForm() {
                         </div>
                     )}
 
-                    {step === 4 && (
+                    {step === 5 && (
                         <div className="grid gap-6">
                             <div className="rounded-[28px] border border-[#2f291d] bg-[#111111] p-6">
                                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -692,6 +724,12 @@ export default function ProfessionalOnboardingForm() {
                                             : "Missing"
                                     }
                                 />
+                            </div>
+
+                            <div className="grid gap-4">
+                                <h2 className="font-serif text-2xl">Your answers</h2>
+                                {CLEANER_APPLICATION_QUESTIONS.map(item => <CompactReviewItem key={item.id} label={item.question} value={typeof formData.screeningAnswers[item.id] === "boolean" ? (formData.screeningAnswers[item.id] ? "Yes" : "No") : "Not answered"} />)}
+                                <CompactReviewItem label={KITCHEN_SCENARIO_QUESTION} value={formData.kitchenScenarioAnswer || "Not answered"} />
                             </div>
 
                             <div className="rounded-[24px] border border-[#2f291d] bg-[#111111] p-5">
@@ -781,11 +819,13 @@ function Textarea({
     value,
     onChange,
     placeholder,
+    maxLength = 3000,
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
+    maxLength?: number;
 }) {
     return (
         <label className="block">
@@ -796,6 +836,7 @@ function Textarea({
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 rows={5}
+                maxLength={maxLength}
                 placeholder={placeholder}
                 className={`${inputClass} resize-none`}
             />

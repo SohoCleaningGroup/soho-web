@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { notifyProfessionalApplicationReceived } from "@/lib/customer-notifications";
 import { prisma } from "@/lib/prisma";
+import { cleanerScreeningSchema, buildCleanerScreeningSnapshot } from "@/lib/cleaner-application";
 import {
   PHONE_VERIFICATION_COOKIE,
   isPhoneVerified,
@@ -21,7 +22,7 @@ import {
   rejectOversizedRequest,
 } from "@/lib/security/request";
 
-const applicationSchema = z.object({
+const applicationSchema = cleanerScreeningSchema.extend({
   fullName: z.string().trim().min(2).max(120),
   email: z.email().max(254).transform((value) => value.toLowerCase()),
   phone: z.string().regex(/^\+[1-9]\d{7,14}$/),
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     const parsed = applicationSchema.safeParse(await request.json());
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, message: "Please review the application fields." },
+        { success: false, message: "Please review your application, choose Yes or No for all ten questions, and answer the kitchen scenario." },
         { status: 400 }
       );
     }
@@ -111,6 +112,7 @@ export async function POST(request: Request) {
         hasOwnSupplies: data.hasOwnSupplies,
         hasTransport: data.hasTransport,
         bio: data.bio || null,
+        screeningResponses: buildCleanerScreeningSnapshot(data),
         status: ProfessionalStatus.PENDING,
         idDocumentType: data.idDocumentType,
         idDocumentFrontUrl: data.idDocumentFrontUrl,
@@ -128,7 +130,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({
       success: true,
-      message: "Professional onboarding submitted successfully.",
+      message: "Thank you! Your application has been received.",
       data: { id: professional.id },
       notifications: {
         smsSent: notificationResult.smsSent,

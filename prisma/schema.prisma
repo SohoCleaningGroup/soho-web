@@ -103,6 +103,8 @@ model ProfessionalProfile {
   hasOwnSupplies Boolean @default(false)
   hasTransport   Boolean @default(false)
 
+  screeningResponses Json?
+
   bio    String?
   status ProfessionalStatus @default(PENDING)
 

@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { readCleanerScreeningSnapshot } from "@/lib/cleaner-application";
+import { KITCHEN_SCENARIO_REVIEW_GUIDANCE } from "@/lib/cleaner-application-questions";
 import ProfessionalStatusActions from "@/components/admin/professionals/ProfessionalStatusActions";
 import DocumentReuploadAction from "@/components/admin/professionals/DocumentReuploadAction";
 import {
@@ -27,6 +29,8 @@ export default async function ProfessionalDetailPage({
   if (!professional) {
     notFound();
   }
+
+  const screening = readCleanerScreeningSnapshot(professional.screeningResponses);
 
   const [profileImageUrl, frontDocumentUrl, backDocumentUrl] = await Promise.all([
     createProfileViewUrl(professional.profileImageUrl),
@@ -159,6 +163,18 @@ export default async function ProfessionalDetailPage({
                 url={backDocumentUrl}
               />
             </div>
+          </Panel>
+
+          <Panel title="Experience & Work Style">
+            {screening ? <div className="grid gap-5">
+              <InfoGrid items={screening.responses.map(item => [item.question, item.answer ? "Yes" : "No"])} />
+              <div className="rounded-[22px] border border-[#2f291d] bg-[#111111] p-5">
+                <h3 className="text-sm leading-7 text-[#d6ab5f]">{screening.scenario.question}</h3>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#f3eadb]">{screening.scenario.answer}</p>
+                <p className="mt-4 text-xs leading-6 text-[#cfc7b7]">Reviewer guidance: {KITCHEN_SCENARIO_REVIEW_GUIDANCE}</p>
+              </div>
+              <p className="text-xs text-[#cfc7b7]">Self-reported answers for discussion in the interview. A “No” does not automatically reject an applicant.</p>
+            </div> : <p className="text-sm text-[#cfc7b7]">This application was submitted before the new questions were added.</p>}
           </Panel>
 
           <Panel title="Bio / Work Background">
