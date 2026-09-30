@@ -14,6 +14,14 @@ export default async function HiringTermsPage({ params, searchParams }: {
   const signer = await getHiringTermsSigner(token);
   if (!signer) notFound();
   const language = query.lang === "es" ? "es" : "en";
+  if (signer.hiringTermsSignedAt) return <main lang={language} className="flex min-h-screen items-center justify-center bg-[#060606] px-5 py-12 text-white">
+    <section className="w-full max-w-xl rounded-2xl border border-[#8f6b2f] bg-[#0a0a0a] p-8 text-center" role="status">
+      <p className="text-sm uppercase tracking-[0.2em] text-[#d6ab5f]">SoHo Cleaning Group</p>
+      <h1 className="mt-6 font-serif text-4xl text-[#d6ab5f]">{language === "es" ? "Gracias, recibimos tu firma" : "Thank you, your signature is recorded"}</h1>
+      <p className="mt-5 text-[#e8dfce]">{language === "es" ? `Los términos de contratación de ${signer.fullName} quedaron firmados. Puedes cerrar esta página.` : `${signer.fullName}'s hiring terms are signed. You can close this page.`}</p>
+      <p className="mt-3 text-sm text-[#cfc7b7]">{language === "es" ? "Revisa tu correo para obtener una copia. Si no la recibes, comunícate con SoHo Cleaning Group." : "Check your email for a copy. If it does not arrive, contact SoHo Cleaning Group."}</p>
+    </section>
+  </main>;
   const terms = hiringTerms(language);
   return <main lang={language} className="min-h-screen bg-[#060606] px-5 py-12 text-white">
     <div className="mx-auto max-w-3xl">
@@ -23,9 +31,7 @@ export default async function HiringTermsPage({ params, searchParams }: {
       <p className="mt-4 text-[#e8dfce]">{language === "es" ? "Preparado para" : "Prepared for"} {signer.fullName}</p>
       <p className="mt-2 text-sm text-[#cfc7b7]">{language === "es" ? "Versión" : "Version"}: {signer.hiringTermsVersion || terms.version}</p>
       <div className="mt-8 whitespace-pre-wrap rounded-2xl border border-[#8f6b2f] bg-[#0a0a0a] p-6 leading-8 text-[#e8dfce]">{signer.hiringTermsSnapshot || terms.text}</div>
-      {signer.hiringTermsSignedAt
-        ? <p className="mt-8 rounded-xl border border-[#8f6b2f] p-5 text-[#e3bd74]">{language === "es" ? "Tu firma quedó registrada. Si no recibiste una copia por correo electrónico, comunícate con SoHo." : "Your signature is recorded. Contact SoHo if you did not receive an email copy."}</p>
-        : <HiringTermsForm token={token} fullName={signer.fullName} language={language} />}
+      <HiringTermsForm token={token} fullName={signer.fullName} language={language} />
     </div>
   </main>;
 }
