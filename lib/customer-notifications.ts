@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+import { hasBookingSmsConsent } from "@/lib/messaging/sms-consent";
 import { sendEmail } from "@/lib/sendgrid";
 
 import {
@@ -22,6 +24,7 @@ import {
 
 export type NotificationResult = {
     smsSent: boolean;
+    smsSkipped: boolean;
     emailSent: boolean;
 };
 
@@ -32,6 +35,7 @@ type Recipient = {
 
 type CustomerRecipient = Recipient & {
     customerName: string;
+    bookingId: string;
 };
 
 /*
@@ -78,6 +82,7 @@ export async function notifyBookingCreated({
         event: "BOOKING_CREATED",
         phone,
         email,
+        bookingId,
         smsBody: getBookingCreatedSmsBody({
             date,
             time,
@@ -93,6 +98,7 @@ export async function notifyBookingCreated({
  */
 
 export async function notifyBookingStatusChanged({
+    bookingId,
     phone,
     email,
     customerName,
@@ -109,6 +115,7 @@ export async function notifyBookingStatusChanged({
         event: `BOOKING_STATUS_${status.toUpperCase()}`,
         phone,
         email,
+        bookingId,
         smsBody: getBookingStatusSmsBody(status),
         emailTemplate,
     });
@@ -121,6 +128,7 @@ export async function notifyBookingStatusChanged({
  */
 
 export async function notifyPaymentCaptured({
+    bookingId,
     phone,
     email,
     customerName,
@@ -140,6 +148,7 @@ export async function notifyPaymentCaptured({
         event: "PAYMENT_CAPTURED",
         phone,
         email,
+        bookingId,
         smsBody: getPaymentCapturedSmsBody({
             amount,
             currency,
@@ -155,6 +164,7 @@ export async function notifyPaymentCaptured({
  */
 
 export async function notifyAdditionalAuthorizationRequested({
+    bookingId,
     phone,
     email,
     customerName,
@@ -184,6 +194,7 @@ export async function notifyAdditionalAuthorizationRequested({
         event: "ADDITIONAL_AUTHORIZATION_REQUESTED",
         phone,
         email,
+        bookingId,
         smsBody: getAdditionalAuthorizationSmsBody({
             additionalAmount,
             finalAmount,
@@ -202,6 +213,7 @@ export async function notifyAdditionalAuthorizationRequested({
  */
 
 export async function notifyAdditionalAuthorizationCompleted({
+    bookingId,
     phone,
     email,
     customerName,
@@ -222,6 +234,7 @@ export async function notifyAdditionalAuthorizationCompleted({
         event: "ADDITIONAL_AUTHORIZATION_COMPLETED",
         phone,
         email,
+        bookingId,
         smsBody:
             getAdditionalAuthorizationCompletedSmsBody({
                 amount,
@@ -305,8 +318,10 @@ async function sendCustomerNotification({
     email,
     smsBody,
     emailTemplate,
+    bookingId,
 }: {
     event: string;
+    bookingId?: string;
     phone: string;
     email: string;
     smsBody: string;
@@ -322,12 +337,35 @@ async function sendCustomerNotification({
      * A Twilio failure must not prevent SendGrid delivery,
      * and a SendGrid failure must not prevent Twilio delivery.
      */
+    let smsSkipped = false;
+    const sendPermittedSms = async () => {
+        if (bookingId) {
+            const consent = await prisma.booking.findUnique({
+                where: { id: bookingId },
+                select: {
+                    acceptedSmsConsent: true,
+                    smsConsentAt: true,
+                    smsConsentPhone: true,
+                    smsConsentVersion: true,
+                },
+            });
+            if (!hasBookingSmsConsent(consent, phone)) {
+                smsSkipped = true;
+                return false;
+            }
+        } else if (!event.startsWith("PROFESSIONAL_")) {
+            // A customer event without its booking must never bypass consent.
+            smsSkipped = true;
+            return false;
+        }
+        return sendSms({
+            to: phone,
+            body: bookingId ? `${smsBody} Reply STOP to opt out or HELP for help.` : smsBody,
+        });
+    };
     const [smsResult, emailResult] =
         await Promise.allSettled([
-            sendSms({
-                to: phone,
-                body: smsBody,
-            }),
+            sendPermittedSms(),
 
             sendEmail({
                 to: [email],
@@ -379,6 +417,7 @@ async function sendCustomerNotification({
 
     return {
         smsSent,
+        smsSkipped,
         emailSent,
     };
 }

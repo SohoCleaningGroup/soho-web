@@ -254,6 +254,7 @@ export async function PATCH(req: Request) {
 
       const notificationResult =
         await notifyBookingStatusChanged({
+          bookingId: cancelledBooking.id,
           phone: cancelledBooking.userProfile.phone,
           email: cancelledBooking.userProfile.email,
           customerName:
@@ -262,7 +263,7 @@ export async function PATCH(req: Request) {
         });
 
       if (
-        !notificationResult.smsSent ||
+        (!notificationResult.smsSent && !notificationResult.smsSkipped) ||
         !notificationResult.emailSent
       ) {
         console.warn(
@@ -318,6 +319,7 @@ export async function PATCH(req: Request) {
 
     const notificationResult =
       await notifyBookingStatusChanged({
+        bookingId: booking.id,
         phone: booking.userProfile.phone,
         email: booking.userProfile.email,
         customerName:
@@ -326,7 +328,7 @@ export async function PATCH(req: Request) {
       });
 
     if (
-      !notificationResult.smsSent ||
+      (!notificationResult.smsSent && !notificationResult.smsSkipped) ||
       !notificationResult.emailSent
     ) {
       console.warn(

@@ -135,13 +135,16 @@ export default function TermsAndConditionsPage() {
             By providing your mobile phone number and consenting to receive text
             messages from SoHo Cleaning Group, you agree to receive transactional
             and service-related SMS messages regarding services you request. These
-            may include verification messages, booking confirmations, booking
+            may include booking confirmations, booking
             status updates, cleaning professional assignment notifications, payment
             authorization and payment status updates, cancellation notices, and
             other service-related communications. Message frequency varies based on
             your booking or account activity. Message and data rates may apply. Reply
             STOP to opt out at any time or HELP for assistance. Consent to receive
-            SMS messages is not a condition of purchase. For information about how
+            booking-update SMS messages is optional and is not a condition of purchase.
+            You can book without opting in and receive booking updates by email.
+            Selecting Send code requests a one-time phone-verification text;
+            this action is separate from enrolling in booking-update SMS. For information about how
             we handle your information, please review our Privacy Policy.
           </Section>
 

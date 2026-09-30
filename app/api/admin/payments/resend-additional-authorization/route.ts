@@ -122,6 +122,7 @@ export async function POST(req: Request) {
 
     const notificationResult =
       await notifyAdditionalAuthorizationRequested({
+          bookingId: authorization.booking.id,
         phone:
           authorization.booking.userProfile.phone,
         email:
@@ -185,7 +186,7 @@ export async function POST(req: Request) {
      * One successful channel is enough to treat the resend as delivered.
      */
     if (
-      !notificationResult.smsSent ||
+      (!notificationResult.smsSent && !notificationResult.smsSkipped) ||
       !notificationResult.emailSent
     ) {
       console.warn(

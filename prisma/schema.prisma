@@ -47,6 +47,11 @@ model Booking {
   frequency                 CleaningFrequency
   specialNotes  String?
 
+  acceptedSmsConsent Boolean @default(false)
+  smsConsentAt DateTime?
+  smsConsentPhone String?
+  smsConsentVersion String?
+
   status BookingStatus @default(PENDING)
 
   payments                 Payment[]

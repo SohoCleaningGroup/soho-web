@@ -1,3 +1,4 @@
+import { BOOKING_SMS_CONSENT_VERSION } from "@/lib/messaging/sms-consent";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -63,6 +64,7 @@ const checkoutSchema = z.object({
     "16:00-18:00",
   ]),
   hasPets: z.boolean(),
+  acceptedSmsConsent: z.boolean().default(false),
   selectedAddOns: z.array(z.string()).max(10),
   // Stripe metadata values are limited to 500 characters. The webhook uses
   // this value to create the booking, so reject longer notes before opening
@@ -293,6 +295,9 @@ export async function POST(request: Request) {
         },
       ],
       metadata: {
+        acceptedSmsConsent: String(body.acceptedSmsConsent),
+        smsConsentAt: body.acceptedSmsConsent ? new Date().toISOString() : "",
+        smsConsentVersion: body.acceptedSmsConsent ? BOOKING_SMS_CONSENT_VERSION : "",
         fullName: body.fullName,
         email: body.email,
         phone,

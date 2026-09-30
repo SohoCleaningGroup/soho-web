@@ -439,13 +439,6 @@ export default function UserOnboardingForm() {
         }
 
         if (step === 1) {
-            if (!formData.acceptedSmsConsent) {
-                alert(
-                    "Please provide consent to receive transactional SMS messages before continuing."
-                );
-                return;
-            }
-
             if (!isPhoneVerified) {
                 alert("Please verify your phone number before continuing.");
                 return;
@@ -558,13 +551,6 @@ export default function UserOnboardingForm() {
     };
 
     const sendOtp = async () => {
-        if (!formData.acceptedSmsConsent) {
-            setOtpError(
-                "Please agree to receive transactional SMS messages before requesting a verification code."
-            );
-            return;
-        }
-
         try {
             setIsSendingOtp(true);
             setOtpMessage("");
@@ -1009,7 +995,6 @@ export default function UserOnboardingForm() {
                                         disabled={
                                             isSendingOtp ||
                                             !formData.phone ||
-                                            !formData.acceptedSmsConsent ||
                                             isPhoneVerified
                                         }
                                         className="min-w-[120px] border-l border-[#2f291d] px-4 text-sm font-medium text-[#e3bd74] transition hover:bg-[#151008] disabled:cursor-not-allowed disabled:opacity-40"
@@ -1018,40 +1003,30 @@ export default function UserOnboardingForm() {
                                             ? "Sending..."
                                             : isPhoneVerified
                                               ? "Verified"
-                                              : "Send OTP"}
+                                              : "Send code"}
                                     </button>
                                 </div>
 
-                                <div className="mt-4 rounded-[20px] border border-[#3a2812] bg-[#0c0a07] p-4">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setFormData(
-                                                (prev) => ({
-                                                    ...prev,
-                                                    acceptedSmsConsent:
-                                                        !prev.acceptedSmsConsent,
-                                                })
-                                            )
-                                        }
-                                        className="flex w-full items-start gap-3 text-left"
-                                    >
-                                        <span
-                                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
-                                                formData.acceptedSmsConsent
-                                                    ? "border-[#d6ab5f] bg-[#d6ab5f] text-black"
-                                                    : "border-[#5b5141] text-transparent"
-                                            }`}
-                                        >
-                                            ✓
-                                        </span>
+                                <p className="mt-3 text-xs leading-6 text-[#8f8778]">
+                                    Select Send code to request a one-time text to verify
+                                    your phone number. This does not enroll you in booking
+                                    update texts. Message and data rates may apply.
+                                </p>
 
+                                <div className="mt-4 rounded-[20px] border border-[#3a2812] bg-[#0c0a07] p-4">
+                                    <label className="flex w-full items-start gap-3 text-left cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.acceptedSmsConsent}
+                                            onChange={(event) => updateField("acceptedSmsConsent", event.target.checked)}
+                                            className="mt-1 h-5 w-5 shrink-0 accent-[#d6ab5f]"
+                                        />
                                         <span className="text-xs leading-6 text-[#b8ad9a]">
-                                            I agree to receive
+                                            Optional: I agree to receive
                                             transactional text messages
                                             from SoHo Cleaning Group
                                             regarding my booking,
-                                            verification, service
+                                            service
                                             updates, cleaner assignment,
                                             payment authorization,
                                             payment status,
@@ -1089,16 +1064,13 @@ export default function UserOnboardingForm() {
                                             </a>
                                             .
                                         </span>
-                                    </button>
+                                    </label>
                                 </div>
 
-                                {!formData.acceptedSmsConsent && (
-                                    <p className="mt-3 text-xs leading-6 text-[#8f8778]">
-                                        SMS consent is required before
-                                        we can send your phone
-                                        verification code.
-                                    </p>
-                                )}
+                                <p className="mt-3 text-xs leading-6 text-[#8f8778]">
+                                    You can leave SMS updates unchecked and still book.
+                                    We will send your booking updates by email.
+                                </p>
 
                                 {isOtpSent &&
                                     !isPhoneVerified && (
@@ -1729,9 +1701,7 @@ export default function UserOnboardingForm() {
                                     (step === 0 &&
                                         (!formData.cleaningType ||
                                             !formData.acceptedPolicies)) ||
-                                    (step === 1 &&
-                                        (!formData.acceptedSmsConsent ||
-                                            !isPhoneVerified))
+                                    (step === 1 && !isPhoneVerified)
                                 }
                                 className="rounded-2xl bg-[#d6ab5f] px-6 py-3 text-sm font-semibold text-black transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
                             >

@@ -245,6 +245,7 @@ export async function POST(req: Request) {
      */
     const notificationResult =
       await notifyAdditionalAuthorizationRequested({
+          bookingId: payment.booking.id,
         phone: payment.booking.userProfile.phone,
         email: payment.booking.userProfile.email,
         customerName:
@@ -314,7 +315,7 @@ export async function POST(req: Request) {
      * complete failure.
      */
     if (
-      !notificationResult.smsSent ||
+      (!notificationResult.smsSent && !notificationResult.smsSkipped) ||
       !notificationResult.emailSent
     ) {
       console.warn(

@@ -617,6 +617,7 @@ export async function POST(req: Request) {
      */
     const notificationResult =
       await notifyPaymentCaptured({
+          bookingId: finalBooking.id,
         phone: finalBooking.userProfile.phone,
         email: finalBooking.userProfile.email,
         customerName:
@@ -626,7 +627,7 @@ export async function POST(req: Request) {
       });
 
     if (
-      !notificationResult.smsSent ||
+      (!notificationResult.smsSent && !notificationResult.smsSkipped) ||
       !notificationResult.emailSent
     ) {
       console.warn(

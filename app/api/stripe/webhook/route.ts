@@ -7,6 +7,7 @@ import {
   PaymentStatus,
 } from "@prisma/client";
 
+import { consentFromCheckoutMetadata } from "@/lib/messaging/sms-consent";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import {
@@ -290,6 +291,7 @@ async function handleOriginalBooking({
   const booking = await prisma.booking.create({
     data: {
       userProfileId: user.id,
+      ...consentFromCheckoutMetadata(metadata),
 
       cleaningType:
         metadata.cleaningType as CleaningType,
@@ -426,7 +428,7 @@ async function handleOriginalBooking({
     });
 
   if (
-    !customerNotification.smsSent ||
+    (!customerNotification.smsSent && !customerNotification.smsSkipped) ||
     !customerNotification.emailSent
   ) {
     console.warn(
@@ -789,6 +791,7 @@ async function handleAdditionalAuthorization({
 
   const customerNotification =
     await notifyAdditionalAuthorizationCompleted({
+      bookingId: authorization.booking.id,
       phone:
         authorization.booking.userProfile.phone,
       email:
@@ -801,7 +804,7 @@ async function handleAdditionalAuthorization({
     });
 
   if (
-    !customerNotification.smsSent ||
+    (!customerNotification.smsSent && !customerNotification.smsSkipped) ||
     !customerNotification.emailSent
   ) {
     console.warn(
