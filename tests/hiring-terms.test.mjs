@@ -7,11 +7,19 @@ import vm from 'node:vm';
 import ts from 'typescript';
 
 const require = createRequire(import.meta.url);
+test('both signed languages state the agreed rates and weekly Friday payday', () => {
+  const terms = load('lib/cleaner-hiring-terms.ts');
+  for (const text of [terms.CLEANER_HIRING_TERMS, terms.CLEANER_HIRING_TERMS_ES]) {
+    assert.match(text, /\$25/); assert.match(text, /\$30/); assert.match(text, /\$35/);
+    assert.match(text, /Friday|viernes/);
+    assert.match(text, /Monday through Sunday|lunes a domingo/);
+  }
+});
 function load(path, mocks = {}) {
-  const module = { exports: {} };
+  const loadedModule = { exports: {} };
   const code = ts.transpileModule(readFileSync(new URL('../' + path, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(code, { module, exports: module.exports, require: id => id in mocks ? mocks[id] : require(id), process, console, URL, Date });
-  return module.exports;
+  vm.runInNewContext(code, { module: loadedModule, exports: loadedModule.exports, require: id => id in mocks ? mocks[id] : require(id), process, console, URL, Date });
+  return loadedModule.exports;
 }
 
 test('private hiring link records one exact signed Spanish snapshot and sends a receipt', async () => {
