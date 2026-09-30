@@ -143,6 +143,66 @@ export async function notifyAdminsOfNewBooking(
   });
 }
 
+
+type CancelledBookingAdminNotification = Pick<
+  NewBookingAdminNotification,
+  "bookingId" | "customer" | "cleaningType" | "preferredDate" | "preferredTime"
+>;
+
+export async function notifyAdminsOfCancelledBooking(
+  booking: CancelledBookingAdminNotification
+): Promise<boolean> {
+  const adminEmails = parseRecipients(process.env.ADMIN_NOTIFICATION_EMAILS);
+  if (adminEmails.length === 0) {
+    console.warn("ADMIN_CANCELLATION_RECIPIENTS_NOT_CONFIGURED");
+    return false;
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const bookingUrl = `${appUrl}/admin/dashboard/bookings/${booking.bookingId}`;
+  const date = booking.preferredDate
+    ? booking.preferredDate.toLocaleDateString("en-US", {
+        timeZone: "America/New_York",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Not selected";
+  const text = [
+    "SoHo Cleaning Group booking cancelled",
+    `Booking: ${booking.bookingId}`,
+    `Customer: ${booking.customer.fullName}`,
+    `Email: ${booking.customer.email}`,
+    `Phone: ${booking.customer.phone}`,
+    `Address: ${formatAddress(booking.customer)}`,
+    `Service: ${formatLabel(booking.cleaningType)}`,
+    `Date: ${date}`,
+    `Time: ${booking.preferredTime || "Not selected"}`,
+    "",
+    `View booking: ${bookingUrl}`,
+  ].join("\n");
+
+  try {
+    const emailSent = await sendEmail({
+      to: adminEmails,
+      subject: `Booking Cancelled — ${booking.customer.fullName} — ${date}`,
+      text,
+      html: `<div style="font-family:Arial,sans-serif"><h1>Booking Cancelled</h1><p>${escapeHtml(text).replaceAll("\n", "<br>")}</p><a href="${escapeHtml(bookingUrl)}">View Booking</a></div>`,
+    });
+    console.log("ADMIN_BOOKING_CANCELLED_NOTIFICATION_RESULT", {
+      bookingId: booking.bookingId,
+      emailRecipients: adminEmails.length,
+      emailSent,
+    });
+    return emailSent;
+  } catch (error) {
+    console.error("ADMIN_BOOKING_CANCELLED_NOTIFICATION_ERROR", {
+      bookingId: booking.bookingId,
+      error,
+    });
+    return false;
+  }
+}
+
 function parseRecipients(value?: string) {
   return (value || "")
     .split(",")

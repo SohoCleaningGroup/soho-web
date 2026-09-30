@@ -7,6 +7,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { notifyBookingStatusChanged } from "@/lib/customer-notifications";
+import { notifyAdminsOfCancelledBooking } from "@/lib/admin-booking-notifications";
 import { rejectUnauthorizedAdminRequest } from "@/lib/security/admin-auth";
 
 export async function PATCH(req: Request) {
@@ -252,15 +253,22 @@ export async function PATCH(req: Request) {
           });
         });
 
-      const notificationResult =
-        await notifyBookingStatusChanged({
+      const [notificationResult] = await Promise.all([
+        notifyBookingStatusChanged({
           bookingId: cancelledBooking.id,
           phone: cancelledBooking.userProfile.phone,
           email: cancelledBooking.userProfile.email,
-          customerName:
-            cancelledBooking.userProfile.fullName,
+          customerName: cancelledBooking.userProfile.fullName,
           status: BookingStatus.CANCELLED,
-        });
+        }),
+        notifyAdminsOfCancelledBooking({
+          bookingId: cancelledBooking.id,
+          customer: cancelledBooking.userProfile,
+          cleaningType: cancelledBooking.cleaningType,
+          preferredDate: cancelledBooking.preferredDate,
+          preferredTime: cancelledBooking.preferredTime,
+        }),
+      ]);
 
       if (
         (!notificationResult.smsSent && !notificationResult.smsSkipped) ||
