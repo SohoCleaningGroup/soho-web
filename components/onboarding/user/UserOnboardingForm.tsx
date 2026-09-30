@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import Link from "next/link";
 import "react-datepicker/dist/react-datepicker.css";
+import { CHECKOUT_DRAFT_KEY, parseCheckoutDraft, serializeCheckoutDraft } from "@/lib/booking/checkout-draft";
 
 import {
     calculateCleaningPrice,
@@ -206,6 +207,63 @@ export default function UserOnboardingForm() {
     const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState<number | null>(null);
 
     const [countryCode, setCountryCode] = useState("+1");
+    const [checkoutReturnMessage, setCheckoutReturnMessage] = useState("");
+    const [isReturningFromCheckout, setIsReturningFromCheckout] = useState(false);
+
+    useEffect(() => {
+        async function restoreCheckout() {
+            let draft;
+            try {
+                draft = parseCheckoutDraft(sessionStorage.getItem(CHECKOUT_DRAFT_KEY), initialData);
+            } catch {
+                return;
+            }
+            if (!draft) {
+                try { sessionStorage.removeItem(CHECKOUT_DRAFT_KEY); } catch {}
+                return;
+            }
+            setIsReturningFromCheckout(true);
+            setIsPhoneVerified(false);
+            setIsOtpSent(false);
+            setOtpCode("");
+            try {
+                const response = await fetch("/api/stripe/return-from-checkout", { method: "POST" });
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error("Unable to close the previous checkout.");
+                if (result.status === "complete") {
+                    sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
+                    setFormData(initialData);
+                    setStep(0);
+                    setCheckoutReturnMessage("Your checkout has already completed. Check your confirmation before starting another booking.");
+                    return;
+                }
+                setFormData(draft.data);
+                setCountryCode(draft.countryCode);
+                setStep(1);
+                setCheckoutReturnMessage("Your booking details have been restored. Make any corrections and verify your phone again to continue.");
+            } catch {
+                setFormData(draft.data);
+                setCountryCode(draft.countryCode);
+                setStep(1);
+                setCheckoutReturnMessage("Your details have been restored. We’ll close the previous checkout before you try again.");
+            } finally {
+                setIsReturningFromCheckout(false);
+            }
+        }
+        void restoreCheckout();
+        const onPageShow = (event: PageTransitionEvent) => {
+            if (event.persisted) {
+                setIsPhoneVerified(false);
+                setIsOtpSent(false);
+                setOtpCode("");
+                setFormData(initialData);
+                setStep(0);
+                void restoreCheckout();
+            }
+        };
+        window.addEventListener("pageshow", onPageShow);
+        return () => window.removeEventListener("pageshow", onPageShow);
+    }, []);
     useEffect(() => {
         if (!formData.preferredDate) {
             return;
@@ -425,6 +483,12 @@ export default function UserOnboardingForm() {
         try {
             setIsSubmitting(true);
 
+            // Close any unfinished checkout from a prior attempt before claiming a slot.
+            const returned = await fetch("/api/stripe/return-from-checkout", { method: "POST" });
+            const returnedResult = await returned.json();
+            if (!returned.ok || !returnedResult.success) throw new Error("Unable to close the previous checkout. Please try again.");
+            if (returnedResult.status === "complete") throw new Error("Your previous checkout has already completed. Please check your confirmation.");
+
             const response = await fetch(
                 "/api/stripe/create-checkout-session",
                 {
@@ -456,6 +520,11 @@ export default function UserOnboardingForm() {
                 );
             }
 
+            try {
+                sessionStorage.setItem(CHECKOUT_DRAFT_KEY, serializeCheckoutDraft(formData, countryCode));
+            } catch {
+                // Checkout still works when the browser disallows tab storage.
+            }
             window.location.assign(result.url);
         } catch (error) {
             console.error(error);
@@ -1631,10 +1700,12 @@ export default function UserOnboardingForm() {
                         </div>
                     )}
 
+                    {checkoutReturnMessage && <p role="status" className="mt-6 text-sm text-[#e3bd74]">{checkoutReturnMessage}</p>}
                     <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/"
+                                onClick={() => { try { sessionStorage.removeItem(CHECKOUT_DRAFT_KEY); } catch {} }}
                                 className="rounded-2xl border border-[#5b5141] px-6 py-3 text-sm font-medium text-[#b8ad9a] transition hover:border-[#8f6b2f] hover:text-[#e3bd74]"
                             >
                                 Cancel
@@ -1671,7 +1742,7 @@ export default function UserOnboardingForm() {
                                 type="button"
                                 onClick={submitForm}
                                 disabled={
-                                    isSubmitting || !pricing
+                                    isSubmitting || isReturningFromCheckout || !isPhoneVerified || !pricing
                                 }
                                 className="rounded-2xl bg-[#d6ab5f] px-6 py-3 text-sm font-semibold text-black transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                             >

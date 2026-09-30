@@ -1,8 +1,10 @@
 import Link from "next/link";
+import ClearCheckoutDraft from "@/components/onboarding/user/ClearCheckoutDraft";
 
 export default function CheckoutSuccessPage() {
   return (
     <main className="min-h-screen bg-[#060606] px-4 py-10 text-white">
+      <ClearCheckoutDraft />
       <section className="mx-auto flex min-h-[85vh] max-w-3xl items-center justify-center">
         <div className="rounded-[32px] border border-[#2a2419] bg-[#0a0a0a] p-10 shadow-[0_24px_80px_rgba(214,171,95,0.12)]">
           <div className="text-center">

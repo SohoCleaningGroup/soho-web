@@ -19,6 +19,7 @@ import {
 } from "@/lib/security/request";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { CHECKOUT_RETURN_COOKIE, checkoutReturnCookieOptions, createCheckoutReturnToken } from "@/lib/security/checkout-return";
 import {
   estimateCleaningDurationMinutes,
   getBookingCapacity,
@@ -333,6 +334,7 @@ export async function POST(request: Request) {
     }
 
     const response = NextResponse.json({ success: true, url: session.url });
+    response.cookies.set(CHECKOUT_RETURN_COOKIE, createCheckoutReturnToken(session.id), checkoutReturnCookieOptions);
     response.cookies.set({
       name: PHONE_VERIFICATION_COOKIE,
       value: "",
