@@ -21,12 +21,22 @@ type BookingItem = {
   };
 };
 
-export default async function AdminBookingsPage() {
+export default async function AdminBookingsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ view?: string }>;
+}) {
     if (!(await hasValidAdminSession())) {
         redirect("/admin/login");
     }
 
+    const archived = (await searchParams).view === "archive";
+    const activeStatuses = ["PENDING", "CONFIRMED", "ASSIGNED"] as const;
+    const archiveStatuses = ["COMPLETED", "CANCELLED"] as const;
     const bookings = await prisma.booking.findMany({
+        where: {
+            status: { in: archived ? [...archiveStatuses] : [...activeStatuses] },
+        },
         include: {
             userProfile: true,
         },
@@ -45,12 +55,23 @@ export default async function AdminBookingsPage() {
                 <h1 className="font-serif text-5xl text-white">Customer Bookings</h1>
 
                 <p className="mt-4 text-[#cfc7b7]">
-                    View all cleaning booking requests submitted by customers.
+                    Active jobs stay visible until completed or cancelled. Archive keeps their history and payment records.
                 </p>
             </div>
 
+            <nav aria-label="Booking views" className="mb-6 flex gap-3">
+                <Link href="/admin/dashboard/bookings" aria-current={!archived ? "page" : undefined}
+                    className={`rounded-xl border px-4 py-2 text-sm ${!archived ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]" : "border-[#3a2812] text-[#cfc7b7]"}`}>
+                    Active bookings
+                </Link>
+                <Link href="/admin/dashboard/bookings?view=archive" aria-current={archived ? "page" : undefined}
+                    className={`rounded-xl border px-4 py-2 text-sm ${archived ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]" : "border-[#3a2812] text-[#cfc7b7]"}`}>
+                    Archive
+                </Link>
+            </nav>
+
             {bookings.length === 0 ? (
-                <EmptyState />
+                <EmptyState archived={archived} />
             ) : (
                 <div className="overflow-hidden rounded-[28px] border border-[#2a2419] bg-[#0a0a0a]">
                     <div className="overflow-x-auto">
@@ -159,10 +180,10 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-function EmptyState() {
+function EmptyState({ archived }: { archived: boolean }) {
     return (
         <div className="flex min-h-[260px] items-center justify-center rounded-[28px] border border-dashed border-[#3a2812] bg-[#0a0a0a] px-6 text-center">
-            <p className="text-sm text-[#8f8778]">No bookings available yet.</p>
+            <p className="text-sm text-[#8f8778]">{archived ? "No completed or cancelled bookings yet." : "No active bookings right now."}</p>
         </div>
     );
 }
