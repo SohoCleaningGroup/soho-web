@@ -65,12 +65,18 @@ export default function TermsAndConditionsPage() {
             Pricing assumes normal residential conditions. Excessive buildup,
             clutter, heavy soil, post-construction debris, or unsafe conditions
             may require additional charges or service refusal.
+            Before each visit, please pick up loose personal items and clear
+            floors, counters, and other areas you want cleaned. Move large
+            obstructions out of the way so our team can safely reach those areas.
+            Our team does not move heavy furniture or unsafe items. Areas that
+            remain blocked may not be cleaned during the scheduled visit.
           </Section>
 
           <Section title="7. Pets">
-            Customers must disclose whether pets are present in the home. Pets
-            should be safely secured during the cleaning visit for the safety of
-            both the cleaning professional and the pet.
+            Please tell us during booking if pets will be in the home and what
+            kind of pets they are. During the cleaning visit, pets must be
+            safely kept in a kennel or a separate room away from the areas our
+            team is cleaning, for the safety of the pets and our team.
           </Section>
 
           <Section title="8. Cleaning Products & Equipment">
