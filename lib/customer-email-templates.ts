@@ -95,6 +95,10 @@ ${details.map(([label, value]) => `${label}: ${value}`).join("\n")}
 
 Your card has been authorized for the booking, but it has not been charged. Payment will be captured after your cleaning is completed.
 
+Before our team arrives, please pick up loose items and clear the floors, counters, and areas you want cleaned. Move large obstructions out of the way. Our team cannot move heavy or unsafe items, and blocked areas may not be cleaned.
+
+If pets will be home, please let us know and keep them safely in a kennel or a separate room away from the areas being cleaned.
+
 We’ll keep you updated about your booking by email and text.
 
 Thank you for choosing SoHo Cleaning Group.
@@ -116,6 +120,10 @@ SoHo Cleaning Group`;
       <strong>Your card has been authorized, but not charged.</strong><br />
       Payment will be captured after your cleaning is completed.
     `)}
+
+    ${paragraph("Before our team arrives, please pick up loose items and clear the floors, counters, and areas you want cleaned. Move large obstructions out of the way. Our team cannot move heavy or unsafe items, and blocked areas may not be cleaned.")}
+
+    ${paragraph("If pets will be home, please let us know and keep them safely in a kennel or a separate room away from the areas being cleaned.")}
 
     ${paragraph(
       "We’ll keep you updated about your booking as your service progresses."
