@@ -883,6 +883,13 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                     </div>
 
                                     <div className="rounded-[24px] border border-[#3a2812] bg-[#111111] p-5">
+                                        <p className="text-sm font-semibold text-[#e3bd74]">Please prepare your home before every cleaning</p>
+                                        <p className="mt-2 text-sm leading-7 text-[#d8d0c1]">
+                                            Pick up loose personal items and clear floors, counters, and areas you want cleaned. Move large obstructions out of the way. Our team cannot move heavy or unsafe items, and blocked areas may not be cleaned during the visit.
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-[24px] border border-[#3a2812] bg-[#111111] p-5">
                                         <p className="text-sm leading-7 text-[#d8d0c1]">
                                             Before requesting a booking,
                                             please review our policies.
@@ -1443,8 +1450,11 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                         ? "✓"
                                         : "○"}
                                 </span>
-                                Do you have pets?
+                                Will any pets be in the home during the cleaning?
                             </button>
+                            <p className="-mt-2 text-sm leading-6 text-[#cfc7b7]">
+                                Please tell us in Special Notes what pets will be present. During the visit, keep them safely in a kennel or a separate room away from the areas being cleaned, for their safety and our team’s.
+                            </p>
 
                             <Textarea
                                 label="Special Notes"
