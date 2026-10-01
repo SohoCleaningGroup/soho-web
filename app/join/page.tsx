@@ -38,6 +38,14 @@ export default function JoinPage() {
             professionalism, and white-glove care.
           </p>
 
+          <p className="mt-4 text-sm font-medium leading-6 text-[#e3bd74]">
+            Manhattan cleaning positions • W-2 employment • Competitive hourly pay
+          </p>
+
+          <p className="mt-5 text-xs uppercase tracking-[0.16em] text-[#9f9788]">
+            Apply → Review → Interview → Training
+          </p>
+
           <div className="mt-8 grid gap-4">
             <Link
               href="/onboarding/professional"
