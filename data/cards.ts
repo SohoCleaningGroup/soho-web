@@ -13,7 +13,7 @@ export type BusinessCard = {
 export const businessCards: Record<string, BusinessCard> = {
   andy: {
     slug: "andy",
-    name: "Andy Vargas",
+    name: "Andy",
     title: "Founder",
     bio: "Premium residential cleaning services across Manhattan with trusted professionals and white-glove care.",
     image: "/images/cards/andy.jpg",
