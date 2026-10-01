@@ -235,7 +235,7 @@ export default function ProfessionalOnboardingForm() {
             setIsSuccess(true);
         } catch (error) {
             console.error(error);
-            alert("Something went wrong. Please try again.");
+            alert(error instanceof Error ? error.message : "Something went wrong. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

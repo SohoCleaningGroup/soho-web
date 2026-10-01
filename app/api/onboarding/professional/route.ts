@@ -54,6 +54,10 @@ export async function POST(request: Request) {
 
     const parsed = applicationSchema.safeParse(await request.json());
     if (!parsed.success) {
+      console.warn("PROFESSIONAL_APPLICATION_VALIDATION", parsed.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        code: issue.code,
+      })));
       return NextResponse.json(
         { success: false, message: "Please review your application, answer all ten Yes or No questions, and choose one sink scenario response." },
         { status: 400 }
@@ -79,6 +83,11 @@ export async function POST(request: Request) {
       !data.idDocumentBackUrl.startsWith(expectedBack) ||
       (data.profileImageUrl && !data.profileImageUrl.startsWith(expectedProfile))
     ) {
+      console.warn("PROFESSIONAL_APPLICATION_FILE_REFERENCE", {
+        front: !data.idDocumentFrontUrl.startsWith(expectedFront),
+        back: !data.idDocumentBackUrl.startsWith(expectedBack),
+        profile: !!data.profileImageUrl && !data.profileImageUrl.startsWith(expectedProfile),
+      });
       return NextResponse.json(
         { success: false, message: "Invalid uploaded file reference." },
         { status: 400 }
