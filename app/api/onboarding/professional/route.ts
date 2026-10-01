@@ -7,6 +7,7 @@ import {
 import { z } from "zod";
 
 import { notifyProfessionalApplicationReceived } from "@/lib/customer-notifications";
+import { notifyAdminsOfProfessionalApplication } from "@/lib/admin-professional-notifications";
 import { prisma } from "@/lib/prisma";
 import { cleanerScreeningSchema, buildCleanerScreeningSnapshot } from "@/lib/cleaner-application";
 import {
@@ -149,6 +150,11 @@ export async function POST(request: Request) {
       professionalName: professional.fullName,
     });
 
+    const adminEmailSent = await notifyAdminsOfProfessionalApplication({
+      applicationId: professional.id,
+      reviewUrl: new URL(`/admin/dashboard/professionals/${professional.id}`, request.url).toString(),
+    });
+
     const response = NextResponse.json({
       success: true,
       message: "Thank you! Your application has been received.",
@@ -156,6 +162,7 @@ export async function POST(request: Request) {
       notifications: {
         smsSent: notificationResult.smsSent,
         emailSent: notificationResult.emailSent,
+        adminEmailSent,
       },
     });
 

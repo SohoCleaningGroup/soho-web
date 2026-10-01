@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 function load(path, mocks = {}) {
   const module = { exports: {} };
   const code = ts.transpileModule(readFileSync(new URL('../' + path, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(code, { module, exports: module.exports, require: id => id in mocks ? mocks[id] : require(id), process: { env: { NODE_ENV: "test" } }, console });
+  vm.runInNewContext(code, { module, exports: module.exports, require: id => id in mocks ? mocks[id] : require(id), process: { env: { NODE_ENV: "test" } }, console, URL });
   return module.exports;
 }
 const questions = load('lib/cleaner-application-questions.ts');
@@ -49,6 +49,7 @@ test('saved questions retain their wording and legacy applications need no fabri
 
 function applicationRoute() {
   const stored = [];
+  const adminNotifications = [];
   const route = load('app/api/onboarding/professional/route.ts', {
     '@/lib/cleaner-application': screening,
     '@/lib/prisma': { prisma: { professionalProfile: {
@@ -56,17 +57,20 @@ function applicationRoute() {
       create: async ({ data }) => { stored.push(data); return { id: 'applicant-test', ...data }; },
     } } },
     '@/lib/customer-notifications': { notifyProfessionalApplicationReceived: async () => ({ smsSent: false, emailSent: false }) },
+    '@/lib/admin-professional-notifications': { notifyAdminsOfProfessionalApplication: async (application) => { adminNotifications.push(application); return true; } },
     '@/lib/security/phone-verification': { PHONE_VERIFICATION_COOKIE: 'verification', isPhoneVerified: async () => true, normalizePhone: p => p, phoneStorageKey: () => 'owner' },
     '@/lib/security/request': { getClientIp: () => 'test', rateLimit: () => null, rejectCrossOrigin: () => null, rejectOversizedRequest: () => null },
   });
   const payload = { ...input(), fullName: 'Test Applicant', email: 'applicant@example.com', phone: '+12125550123', servicesOffered: [], serviceAreas: [], availability: ['MONDAY'], hasOwnSupplies: false, hasTransport: true, idDocumentType: 'NATIONAL_ID', idDocumentFrontUrl: 'applications/owner/id-front-1', idDocumentBackUrl: 'applications/owner/id-back-1' };
-  return { route, stored, payload };
+  return { route, stored, adminNotifications, payload };
 }
 test('application API persists all screening answers and the scenario in the applicant profile', async () => {
   const h = applicationRoute();
-  const response = await h.route.POST({ json: async () => h.payload });
+  const response = await h.route.POST({ url: 'https://staging.example/api/onboarding/professional', json: async () => h.payload });
   assert.equal(response.status, 200);
   assert.equal(h.stored.length, 1);
+  assert.equal(h.adminNotifications.length, 1);
+  assert.equal(h.adminNotifications[0].applicationId, 'applicant-test');
   const saved = screening.readCleanerScreeningSnapshot(h.stored[0].screeningResponses);
   assert.equal(saved.responses.length, 10);
   assert.equal(saved.responses.every(r => r.answer === false), true);
@@ -74,7 +78,8 @@ test('application API persists all screening answers and the scenario in the app
 });
 test('application API rejects an incomplete questionnaire without creating a profile', async () => {
   const h = applicationRoute(); delete h.payload.screeningAnswers.feedback;
-  const response = await h.route.POST({ json: async () => h.payload });
+  const response = await h.route.POST({ url: 'https://staging.example/api/onboarding/professional', json: async () => h.payload });
   assert.equal(response.status, 400);
   assert.equal(h.stored.length, 0);
+  assert.equal(h.adminNotifications.length, 0);
 });
