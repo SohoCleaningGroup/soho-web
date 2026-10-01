@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { businessCards } from "@/data/cards";
 
 export default async function BusinessCardPage({
@@ -46,13 +47,27 @@ export default async function BusinessCardPage({
           <p className="mt-4 text-sm leading-7 text-[#cfc7b7]">{card.bio}</p>
 
           <div className="mt-8 grid gap-4">
-            <a
-              href={card.website}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              href="/onboarding/user"
               className="rounded-2xl bg-[#d6ab5f] px-6 py-4 text-sm font-semibold text-black transition hover:scale-[1.02]"
             >
-              Visit Website
+              Book a Cleaning
+            </Link>
+
+            <a
+              href={`tel:${card.phone}`}
+              className="rounded-2xl border border-[#8f6b2f] px-6 py-4 text-sm font-medium text-[#e3bd74] transition hover:bg-[#151008]"
+            >
+              Call
+            </a>
+
+            <a
+              href="https://g.page/r/CcebMKcdVpKsEBM/review"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-2xl border border-[#8f6b2f] px-6 py-4 text-sm font-medium text-[#e3bd74] transition hover:bg-[#151008]"
+            >
+              Write a Review
             </a>
 
             <a
@@ -65,24 +80,10 @@ export default async function BusinessCardPage({
             </a>
 
             <a
-              href={`tel:${card.phone}`}
-              className="rounded-2xl border border-[#8f6b2f] px-6 py-4 text-sm font-medium text-[#e3bd74] transition hover:bg-[#151008]"
-            >
-              Call
-            </a>
-
-            <a
               href={`mailto:${card.email}`}
               className="rounded-2xl border border-[#8f6b2f] px-6 py-4 text-sm font-medium text-[#e3bd74] transition hover:bg-[#151008]"
             >
               Email
-            </a>
-
-            <a
-              href="https://g.page/r/CcebMKcdVpKsEBM/review"
-              className="rounded-2xl border border-[#8f6b2f] px-6 py-4 text-sm font-medium text-[#e3bd74] transition hover:bg-[#151008]"
-            >
-              Write a Review
             </a>
           </div>
         </div>
