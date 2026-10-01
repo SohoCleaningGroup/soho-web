@@ -136,7 +136,7 @@ export default async function AdminDashboardPage() {
                         {booking.userProfile.fullName}
                       </p>
                       <p className="mt-1 text-xs text-[#8f8778]">
-                        {formatLabel(booking.cleaningType)} · {booking.homeSize}
+                        {formatLabel(booking.cleaningType)} · {booking.homeSize.replace(/(\d+)\s*BHK/gi, "$1 BR")}
                       </p>
                     </div>
 
