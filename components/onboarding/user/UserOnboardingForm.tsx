@@ -189,6 +189,12 @@ const addOnOptions = [
         description: "Add interior refrigerator cleaning to your service.",
         price: 40,
     },
+    {
+        id: "INSIDE_OVEN",
+        label: "Inside Oven Cleaning",
+        description: "Add interior oven cleaning to your service.",
+        price: 40,
+    },
 ];
 
 export default function UserOnboardingForm({ initialReferralCode = "", isTestSite = false }: { initialReferralCode?: string; isTestSite?: boolean }) {
@@ -754,10 +760,13 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                                     }
                                                     type="button"
                                                     onClick={() =>
-                                                        updateField(
-                                                            "cleaningType",
-                                                            service.value
-                                                        )
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            cleaningType: service.value,
+                                                            ...(service.value === "MOVE_IN_MOVE_OUT"
+                                                                ? { selectedAddOns: [], addOnTotal: 0 }
+                                                                : {}),
+                                                        }))
                                                     }
                                                     className={`rounded-[24px] border p-5 text-left transition ${
                                                         isSelected
@@ -810,7 +819,11 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                             to your final total.
                                         </p>
 
-                                        <div className="mt-5 grid gap-3">
+                                        {formData.cleaningType === "MOVE_IN_MOVE_OUT" ? (
+                                            <p className="mt-5 text-sm text-[#d8d0c1]">
+                                                Inside oven and refrigerator cleaning are already included in Move In / Move Out.
+                                            </p>
+                                        ) : <div className="mt-5 grid gap-3">
                                             {addOnOptions.map(
                                                 (addOn) => {
                                                     const isSelected =
@@ -866,7 +879,7 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                                     );
                                                 }
                                             )}
-                                        </div>
+                                        </div>}
                                     </div>
 
                                     <div className="rounded-[24px] border border-[#3a2812] bg-[#111111] p-5">
