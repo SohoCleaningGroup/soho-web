@@ -10,6 +10,7 @@ import {
   createProfileViewUrl,
 } from "@/lib/professional-documents";
 import { hasValidAdminSession } from "@/lib/security/admin-auth";
+import { PHONE_NUMBER } from "@/lib/site";
 
 export default async function ProfessionalDetailPage({
   params,
@@ -202,11 +203,22 @@ export default async function ProfessionalDetailPage({
   </div>
 </Panel>
           {professional.status === "APPROVED" && <Panel title="Individual pay notice">
-            <p className="text-sm leading-7 text-[#f3eadb]">The signed hiring terms describe the training and regular cleaner rates. Complete a separate notice for this cleaner before work begins, including their actual rates, overtime, payday, employer details, and any allowances. Keep the signed acknowledgment and give the cleaner a copy.</p>
-            <p className="mt-4 text-sm leading-7 text-[#cfc7b7]">For the stated $25/hour training and $30/hour regular roles, start with New York’s multiple hourly rates form (LS 55). If this cleaner has only one rate, use LS 54. Provide the form in the cleaner’s primary language when New York offers it.</p>
+            <p className="text-sm leading-7 text-[#f3eadb]">Complete the official New York pay notice for this cleaner at hiring, before their first shift. The signed hiring terms and approval email do not replace this notice. Confirm the actual rates and the cleaner’s primary language before filling it out.</p>
+            <div className="mt-5">
+              <InfoGrid items={[
+                ["Legal employer", "SoHo Cleaning Group LLC"],
+                ["Business name", "SoHo Cleaning Group"],
+                ["Principal business / mailing address", "245 Elizabeth St, New York, NY 10012"],
+                ["Employer phone", PHONE_NUMBER],
+                ["Pay basis / regular payday", "Hourly / weekly on Friday"],
+                ["Current planned rates", "$25/hour supervised training; $30/hour regular cleaner after skills sign-off. Confirm this hire’s actual rates."],
+                ["Minimum-wage allowances", "None (no tip, meal, or lodging allowance claimed)"],
+              ]} />
+            </div>
+            <p className="mt-4 text-sm leading-7 text-[#cfc7b7]">Use LS 55 if both hourly rates apply to this hire, or LS 54 if only one applies. Fill in the applicable overtime rate(s) on the form; do not assume an overtime amount from the hiring terms. Give the notice in English and the cleaner’s primary language if New York provides that translation. Have the cleaner acknowledge it, give them a copy, and retain the signed record.</p>
             <div className="mt-5 flex flex-wrap gap-3 text-sm text-[#e3bd74]">
-              <a href="https://dol.ny.gov/LS55-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">NY LS 55 forms and translations</a>
-              <a href="https://dol.ny.gov/LS54-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">NY LS 54 forms</a>
+              <a href="https://dol.ny.gov/LS55-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">Open NY LS 55 and translations</a>
+              <a href="https://dol.ny.gov/LS54-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">Open NY LS 54</a>
             </div>
           </Panel>}
         </div>
