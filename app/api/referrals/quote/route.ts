@@ -9,6 +9,7 @@ const schema = z.object({
   address: z.string().min(3).max(200), apartment: z.string().max(50), zipCode: z.string().max(10),
   cleaningType: z.enum(["SOHO_SIGNATURE", "SOHO_SIGNATURE_DEEP", "MOVE_IN_MOVE_OUT", "RECURRING"]),
   homeSize: z.enum(["1BHK", "2BHK", "3BHK", "4BHK"]), totalSqft: z.coerce.number().int().min(100).max(20000),
+  frequency: z.enum(["WEEKLY", "BI_WEEKLY", "MONTHLY", "ONE_TIME"]).optional(),
 });
 export async function POST(request: Request) {
   const rejected = rejectCrossOrigin(request) || rejectOversizedRequest(request, 4096) || rateLimit(`referral-quote:${getClientIp(request)}`, 20);
