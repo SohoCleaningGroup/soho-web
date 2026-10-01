@@ -37,6 +37,7 @@ type BookingPayment = {
 
 const addOnLabels: Record<string, string> = {
     INSIDE_FRIDGE: "Inside Fridge Cleaning",
+    INSIDE_OVEN: "Inside Oven Cleaning",
 };
 
 export default async function BookingDetailPage({
