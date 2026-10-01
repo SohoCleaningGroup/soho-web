@@ -32,6 +32,10 @@ type FormData = {
     preferredDate: Date | null;
     preferredTime: string;
     specialNotes: string;
+    willBeHome: string;
+    accessMethod: string;
+    accessInstructions: string;
+    prefersOwnSupplies: boolean;
     hasPets: boolean;
     acceptedPolicies: boolean;
     acceptedSmsConsent: boolean;
@@ -59,6 +63,10 @@ const initialData: FormData = {
     preferredDate: null,
     preferredTime: "",
     specialNotes: "",
+    willBeHome: "",
+    accessMethod: "",
+    accessInstructions: "",
+    prefersOwnSupplies: false,
     hasPets: false,
     acceptedPolicies: false,
     acceptedSmsConsent: false,
@@ -369,6 +377,7 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                   cleaningType: formData.cleaningType as CleaningType,
                   homeSize: formData.homeSize as HomeSize,
                   totalSqft: Number(formData.totalSqft),
+                  frequency: formData.frequency,
               })
             : null;
 
@@ -487,6 +496,13 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                 alert("Please select preferred date and time.");
                 return;
             }
+        }
+
+        if (step === 2 && (!formData.willBeHome || !formData.accessMethod ||
+            (formData.willBeHome === "NO" && formData.accessMethod === "CUSTOMER") ||
+            ((formData.accessMethod === "SECURE_KEY" || formData.accessMethod === "OTHER") && !formData.accessInstructions.trim()))) {
+            alert("Please tell us whether you will be home and how our team will get in.");
+            return;
         }
 
         setStep((prev) =>
@@ -1218,6 +1234,30 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                     }
                                 />
                             </div>
+
+                            <div className="rounded-[24px] border border-[#3a2812] bg-[#111111] p-5">
+                                <p className="text-sm font-medium text-[#d8d0c1]">Will you be home during the cleaning?</p>
+                                <div className="mt-3 flex gap-3">
+                                    {[["YES", "I will be home"], ["NO", "I will not be home"]].map(([value, label]) => (
+                                        <button key={value} type="button" aria-pressed={formData.willBeHome === value}
+                                            onClick={() => updateField("willBeHome", value)}
+                                            className={`rounded-xl border px-4 py-3 text-sm ${formData.willBeHome === value ? "border-[#d6ab5f] text-[#e3bd74]" : "border-[#3a2812] text-[#cfc7b7]"}`}>
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <Select label="How will our team get in?" value={formData.accessMethod}
+                                onChange={(value) => updateField("accessMethod", value)}
+                                options={[
+                                    { value: "CUSTOMER", label: "I will let the team in", disabled: formData.willBeHome === "NO" },
+                                    { value: "DOORMAN", label: "Key or access with the doorman" },
+                                    { value: "SECURE_KEY", label: "Key in a secure location" },
+                                    { value: "OTHER", label: "Other arrangement" },
+                                ]} />
+                            <Textarea label="Access instructions" value={formData.accessInstructions}
+                                maxLength={200} placeholder="For example: ask the doorman for the key, or tell us where to find it."
+                                onChange={(value) => updateField("accessInstructions", value)} />
                         </div>
                     )}
 
@@ -1456,10 +1496,23 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                 Please tell us in Special Notes what pets will be present. During the visit, keep them safely in a kennel or a separate room away from the areas being cleaned, for their safety and our team’s.
                             </p>
 
+                            <div className="rounded-[24px] border border-[#3a2812] bg-[#111111] p-5">
+                                <p className="text-sm font-semibold text-[#e3bd74]">Cleaning supplies and equipment</p>
+                                <p className="mt-2 text-sm leading-6 text-[#cfc7b7]">
+                                    We bring our own professional supplies and equipment, which we recommend for the best result. If you prefer us to use yours, tell us what to use in Special Notes. Customer equipment must be safe and in working order; worn or unsuitable equipment may affect what we can clean.
+                                </p>
+                                <button type="button" aria-pressed={formData.prefersOwnSupplies}
+                                    onClick={() => updateField("prefersOwnSupplies", !formData.prefersOwnSupplies)}
+                                    className={`mt-4 rounded-xl border px-4 py-3 text-sm ${formData.prefersOwnSupplies ? "border-[#d6ab5f] text-[#e3bd74]" : "border-[#3a2812] text-[#cfc7b7]"}`}>
+                                    {formData.prefersOwnSupplies ? "✓ " : "○ "}I prefer you use my supplies or equipment
+                                </button>
+                            </div>
+
                             <Textarea
                                 label="Special Notes"
                                 value={formData.specialNotes}
-                                maxLength={500}
+                                maxLength={150}
+                                placeholder="For example: pets at home, delicate surfaces, rooms needing extra attention, or anything else we should know."
                                 onChange={(value) =>
                                     updateField(
                                         "specialNotes",
@@ -1628,6 +1681,10 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                             value={`$${pricing.extraSqftCharge}`}
                                         />
 
+                                        {pricing.recurringDiscount > 0 && (
+                                            <SummaryRow label={`Recurring discount (${pricing.recurringDiscountPercent}%)`} value={`−$${pricing.recurringDiscount.toFixed(2)}`} />
+                                        )}
+
                                         {selectedAddOns.map(
                                             (addOn) => (
                                                 <SummaryRow
@@ -1708,6 +1765,19 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                         </p>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="rounded-[24px] border border-[#2f291d] bg-[#111111] p-5">
+                                <p className="text-xs uppercase tracking-[0.2em] text-[#8f8778]">Home access</p>
+                                <p className="mt-3 text-sm leading-7 text-[#f3eadb]">
+                                    {formData.willBeHome === "YES" ? "Customer will be home" : "Customer will be away"} · {formData.accessMethod === "DOORMAN" ? "Doorman" : formData.accessMethod === "SECURE_KEY" ? "Key in secure location" : formData.accessMethod === "CUSTOMER" ? "Customer lets team in" : "Other arrangement"}
+                                    {formData.accessInstructions && ` · ${formData.accessInstructions}`}
+                                </p>
+                            </div>
+
+                            <div className="rounded-[24px] border border-[#2f291d] bg-[#111111] p-5">
+                                <p className="text-xs uppercase tracking-[0.2em] text-[#8f8778]">Supplies and equipment</p>
+                                <p className="mt-3 text-sm text-[#f3eadb]">{formData.prefersOwnSupplies ? "Customer prefers their own; see Special Notes" : "SoHo supplies and equipment"}</p>
                             </div>
 
                             <div className="rounded-[24px] border border-[#2f291d] bg-[#111111] p-5">
@@ -1859,11 +1929,13 @@ function Textarea({
     value,
     onChange,
     maxLength,
+    placeholder,
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
     maxLength?: number;
+    placeholder?: string;
 }) {
     return (
         <label className="block">
@@ -1874,6 +1946,7 @@ function Textarea({
             <textarea
                 value={value}
                 maxLength={maxLength}
+                placeholder={placeholder}
                 onChange={(event) =>
                     onChange(event.target.value)
                 }
