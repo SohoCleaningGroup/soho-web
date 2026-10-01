@@ -128,7 +128,7 @@ export default async function AdminDashboardPage() {
                 <a
                   key={booking.id}
                   href={`/admin/dashboard/bookings/${booking.id}`}
-                  className="rounded-[22px] border border-[#2f291d] bg-[#111111] p-5 transition hover:border-[#8f6b2f]"
+                  className="relative z-10 block cursor-pointer touch-manipulation rounded-[22px] border border-[#2f291d] bg-[#111111] p-5 transition hover:border-[#8f6b2f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d6ab5f]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -140,7 +140,10 @@ export default async function AdminDashboardPage() {
                       </p>
                     </div>
 
-                    <StatusBadge status={booking.status} />
+                    <div className="flex flex-col items-end gap-2">
+                      <StatusBadge status={booking.status} />
+                      <span className="text-xs font-medium text-[#d6ab5f] underline underline-offset-4">View booking →</span>
+                    </div>
                   </div>
                 </a>
               ))}
