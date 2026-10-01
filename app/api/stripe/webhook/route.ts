@@ -244,6 +244,7 @@ async function handleOriginalBooking({
       metadata.cleaningType as PricingCleaningType,
     homeSize: metadata.homeSize as HomeSize,
     totalSqft: Number(metadata.totalSqft),
+    frequency: metadata.frequency,
   });
 
   const selectedAddOns = metadata.selectedAddOns
