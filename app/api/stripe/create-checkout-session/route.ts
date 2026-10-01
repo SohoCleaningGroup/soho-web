@@ -33,6 +33,7 @@ import {
 
 const addOnOptions = [
   { id: "INSIDE_FRIDGE", label: "Inside Fridge Cleaning", price: 40 },
+  { id: "INSIDE_OVEN", label: "Inside Oven Cleaning", price: 40 },
 ] as const;
 
 const checkoutSchema = z.object({
@@ -255,6 +256,13 @@ export async function POST(request: Request) {
       homeSize: body.homeSize as HomeSize,
       totalSqft: body.totalSqft,
     });
+
+    if (body.cleaningType === "MOVE_IN_MOVE_OUT" && body.selectedAddOns.length) {
+      return NextResponse.json(
+        { success: false, message: "Oven and refrigerator interiors are included with Move In / Move Out." },
+        { status: 400 }
+      );
+    }
 
     const selectedAddOns = addOnOptions.filter((addOn) =>
       body.selectedAddOns.includes(addOn.id)
