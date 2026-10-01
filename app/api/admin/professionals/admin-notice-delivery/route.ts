@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ query: `to_email = "${recipient.replaceAll('"', '')}" AND subject = "${subject}"`, limit: 10 }),
       cache: "no-store",
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(25000),
     });
     if (response.status === 403) return NextResponse.json({ success: false, message: "The SendGrid key cannot read email logs. Check Email Activity in SendGrid." }, { status: 502 });
     if (!response.ok) {
