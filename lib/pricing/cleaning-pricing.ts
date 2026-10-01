@@ -6,6 +6,13 @@ export type CleaningType =
   | "AIRBNB_TURNOVER";
 
 export type HomeSize = "1BHK" | "2BHK" | "3BHK" | "4BHK";
+export type RecurringFrequency = "WEEKLY" | "BI_WEEKLY" | "MONTHLY";
+
+export const recurringDiscountPercent: Record<RecurringFrequency, number> = {
+  WEEKLY: 15,
+  BI_WEEKLY: 10,
+  MONTHLY: 5,
+};
 
 type PricingRule = {
   label: string;
@@ -69,10 +76,10 @@ export const pricingConfig: Record<CleaningType, PricingRule> = {
   RECURRING: {
     label: "Recurring Cleaning",
     basePrices: {
-      "1BHK": 130,
-      "2BHK": 190,
-      "3BHK": 260,
-      "4BHK": 330,
+      "1BHK": 150,
+      "2BHK": 220,
+      "3BHK": 300,
+      "4BHK": 380,
     },
     standardSqft: {
       "1BHK": 700,
@@ -80,7 +87,7 @@ export const pricingConfig: Record<CleaningType, PricingRule> = {
       "3BHK": 1600,
       "4BHK": 2200,
     },
-    extraSqftRate: 0.12,
+    extraSqftRate: 0.15,
   },
 
   AIRBNB_TURNOVER: {
@@ -120,10 +127,12 @@ export function calculateCleaningPrice({
   cleaningType,
   homeSize,
   totalSqft,
+  frequency,
 }: {
   cleaningType: CleaningType;
   homeSize: HomeSize;
   totalSqft: number;
+  frequency?: string;
 }) {
   const rule = pricingConfig[cleaningType];
 
@@ -147,7 +156,12 @@ export function calculateCleaningPrice({
   const extraSqftCharge = Number(
     (extraSqft * rule.extraSqftRate).toFixed(2)
   );
-  const total = Number((basePrice + extraSqftCharge).toFixed(2));
+  const undiscountedTotal = Number((basePrice + extraSqftCharge).toFixed(2));
+  const discountPercent = cleaningType === "RECURRING"
+    ? recurringDiscountPercent[frequency as RecurringFrequency] || 0
+    : 0;
+  const recurringDiscount = Number((undiscountedTotal * discountPercent / 100).toFixed(2));
+  const total = Number((undiscountedTotal - recurringDiscount).toFixed(2));
 
   return {
     serviceLabel: rule.label,
@@ -159,6 +173,9 @@ export function calculateCleaningPrice({
     extraSqft,
     extraSqftRate: rule.extraSqftRate,
     extraSqftCharge,
+    undiscountedTotal,
+    recurringDiscount,
+    recurringDiscountPercent: discountPercent,
     total,
     currency: "USD",
   };
