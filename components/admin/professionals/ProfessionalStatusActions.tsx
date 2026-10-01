@@ -13,7 +13,7 @@ export default function ProfessionalStatusActions({
   currentStatus: Status;
 }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState<Status | "RESEND" | "ADMIN_NOTICE" | null>(null);
+  const [isLoading, setIsLoading] = useState<Status | "RESEND" | "ADMIN_NOTICE" | "DELIVERY" | null>(null);
 
   const [message, setMessage] = useState("");
 
@@ -90,6 +90,23 @@ export default function ProfessionalStatusActions({
           setIsLoading(null);
         }
       }} disabled={isLoading !== null} className="mt-4 block rounded-2xl border border-[#8f6b2f] px-5 py-3 text-sm text-[#e3bd74] disabled:opacity-40">{isLoading === "ADMIN_NOTICE" ? "Sending…" : "Resend admin application notice"}</button>
+      <button type="button" onClick={async () => {
+        setIsLoading("DELIVERY");
+        setMessage("");
+        try {
+          const response = await fetch("/api/admin/professionals/admin-notice-delivery", { method: "POST" });
+          const result = await response.json();
+          if (!response.ok || !result.success) throw new Error(result.message || "Could not check delivery.");
+          const latest = result.messages?.[0];
+          setMessage(latest
+            ? `Admin email to ${latest.to}: ${latest.status}${latest.reason ? ` — ${latest.reason}` : ""}. SendGrid event time: ${latest.at || "not available"}.`
+            : "SendGrid has no matching admin email in its recent event log.");
+        } catch (error) {
+          setMessage(error instanceof Error ? error.message : "Could not check delivery.");
+        } finally {
+          setIsLoading(null);
+        }
+      }} disabled={isLoading !== null} className="mt-3 block rounded-2xl border border-[#8f6b2f] px-5 py-3 text-sm text-[#e3bd74] disabled:opacity-40">{isLoading === "DELIVERY" ? "Checking…" : "Check admin email delivery"}</button>
       {message && <p role="status" className="mt-4 text-sm text-[#e3bd74]">{message}</p>}
     </div>
   );
