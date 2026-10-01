@@ -46,6 +46,7 @@ export default async function AdminDashboardPage() {
     prisma.professionalProfile.count({ where: { status: "APPROVED" } }),
     prisma.userProfile.count({ where: { role: "USER" } }),
     prisma.booking.findMany({
+      where: { status: { in: ["PENDING", "CONFIRMED", "ASSIGNED"] } },
       include: { userProfile: true },
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -119,9 +120,9 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="mt-10 grid gap-6 xl:grid-cols-2">
-        <Panel title="Recent Bookings">
+        <Panel title="Recent Active Bookings">
           {recentBookings.length === 0 ? (
-            <EmptyState text="No bookings available yet." />
+            <EmptyState text="No active bookings right now. Completed and cancelled jobs are in the booking archive." />
           ) : (
             <div className="grid gap-3">
               {recentBookings.map((booking: RecentBookingItem) => (
