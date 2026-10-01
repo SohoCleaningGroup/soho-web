@@ -42,6 +42,10 @@ export default function JoinPage() {
             Manhattan cleaning positions • W-2 employment • Competitive hourly pay
           </p>
 
+          <p className="mt-3 text-sm leading-6 text-[#cfc7b7]">
+            Reliable weekday work • Manhattan jobs • Professional team • Growth opportunities
+          </p>
+
           <p className="mt-5 text-xs uppercase tracking-[0.16em] text-[#9f9788]">
             Apply → Review → Interview → Training
           </p>
