@@ -201,6 +201,14 @@ export default async function ProfessionalDetailPage({
     <DocumentReuploadAction professionalId={professional.id} />
   </div>
 </Panel>
+          {professional.status === "APPROVED" && <Panel title="Individual pay notice">
+            <p className="text-sm leading-7 text-[#f3eadb]">The signed hiring terms describe the training and regular cleaner rates. Complete a separate notice for this cleaner before work begins, including their actual rates, overtime, payday, employer details, and any allowances. Keep the signed acknowledgment and give the cleaner a copy.</p>
+            <p className="mt-4 text-sm leading-7 text-[#cfc7b7]">For the stated $25/hour training and $30/hour regular roles, start with New York’s multiple hourly rates form (LS 55). If this cleaner has only one rate, use LS 54. Provide the form in the cleaner’s primary language when New York offers it.</p>
+            <div className="mt-5 flex flex-wrap gap-3 text-sm text-[#e3bd74]">
+              <a href="https://dol.ny.gov/LS55-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">NY LS 55 forms and translations</a>
+              <a href="https://dol.ny.gov/LS54-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">NY LS 54 forms</a>
+            </div>
+          </Panel>}
         </div>
       </div>
     </section>

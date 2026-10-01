@@ -13,7 +13,7 @@ export default function ProfessionalStatusActions({
   currentStatus: Status;
 }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState<Status | "RESEND" | null>(null);
+  const [isLoading, setIsLoading] = useState<Status | "RESEND" | "ADMIN_NOTICE" | null>(null);
 
   const [message, setMessage] = useState("");
 
@@ -72,6 +72,24 @@ export default function ProfessionalStatusActions({
       ))}
       </div>
       {currentStatus === "APPROVED" && <button type="button" onClick={() => updateStatus("RESEND")} disabled={isLoading !== null} className="mt-4 rounded-2xl border border-[#8f6b2f] px-5 py-3 text-sm text-[#e3bd74] disabled:opacity-40">{isLoading === "RESEND" ? "Sending…" : "Resend approval email & handbook"}</button>}
+      <button type="button" onClick={async () => {
+        setIsLoading("ADMIN_NOTICE");
+        setMessage("");
+        try {
+          const response = await fetch("/api/admin/professionals/resend-admin-notice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ professionalId }),
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) throw new Error(result.message || "Could not send the admin notice.");
+          setMessage(result.message);
+        } catch (error) {
+          setMessage(error instanceof Error ? error.message : "Could not send the admin notice.");
+        } finally {
+          setIsLoading(null);
+        }
+      }} disabled={isLoading !== null} className="mt-4 block rounded-2xl border border-[#8f6b2f] px-5 py-3 text-sm text-[#e3bd74] disabled:opacity-40">{isLoading === "ADMIN_NOTICE" ? "Sending…" : "Resend admin application notice"}</button>
       {message && <p role="status" className="mt-4 text-sm text-[#e3bd74]">{message}</p>}
     </div>
   );
