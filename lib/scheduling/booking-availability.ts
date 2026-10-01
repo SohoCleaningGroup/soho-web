@@ -101,7 +101,9 @@ export function estimateCleaningDurationMinutes({
   const includedSqft = INCLUDED_SQFT[homeSize] ?? totalSqft;
   const extraSqft = Math.max(0, totalSqft - includedSqft);
   const extraSqftMinutes = Math.ceil(extraSqft / 500) * 30;
-  const addOnMinutes = selectedAddOns.includes("INSIDE_FRIDGE") ? 30 : 0;
+  const addOnMinutes =
+    (selectedAddOns.includes("INSIDE_FRIDGE") ? 30 : 0) +
+    (selectedAddOns.includes("INSIDE_OVEN") ? 30 : 0);
 
   return Math.min(8 * 60, base + extraSqftMinutes + addOnMinutes);
 }
