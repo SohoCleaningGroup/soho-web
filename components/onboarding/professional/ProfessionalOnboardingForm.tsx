@@ -243,9 +243,13 @@ export default function ProfessionalOnboardingForm() {
 
     const uploadProfileImage = async (file: File) => {
         try {
+            if (!isPhoneVerified) {
+                throw new Error("Verify your phone number before uploading your profile picture.");
+            }
             setIsUploadingProfileImage(true);
+            const uploadFile = await prepareApplicationPhoto(file, "profile-photo.jpg");
             const upload = await uploadProfessionalFile(
-                file,
+                uploadFile,
                 "profile",
                 normalizePhone()
             );
@@ -253,7 +257,7 @@ export default function ProfessionalOnboardingForm() {
             setProfileImagePreviewUrl(upload.previewUrl || "");
         } catch (error) {
             console.error(error);
-            alert("Image upload failed. Please try again.");
+            alert(error instanceof Error ? error.message : "Image upload failed. Please try again.");
         } finally {
             setIsUploadingProfileImage(false);
         }
@@ -269,7 +273,7 @@ export default function ProfessionalOnboardingForm() {
             } else {
                 setIsUploadingIdBack(true);
             }
-            const uploadFile = file.type === "application/pdf" ? file : await prepareIdPhoto(file);
+            const uploadFile = file.type === "application/pdf" ? file : await prepareApplicationPhoto(file, "id-photo.jpg");
 
             if (uploadFile.size > 2 * 1024 * 1024) {
                 throw new Error("This file is too large. Please choose a PDF under 2 MB or a different photo.");
@@ -374,11 +378,6 @@ export default function ProfessionalOnboardingForm() {
                 <div className="rounded-[32px] border border-[#2a2419] bg-[#0a0a0a] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:p-10">
                     {step === 0 && (
                         <div className="grid gap-5">
-                            <ProfileImageUpload
-                                value={profileImagePreviewUrl}
-                                isUploading={isUploadingProfileImage}
-                                onChange={uploadProfileImage}
-                            />
                             <Input
                                 label="Full Name"
                                 value={formData.fullName}
@@ -458,6 +457,13 @@ export default function ProfessionalOnboardingForm() {
                                 {otpMessage && <p className="mt-3 text-sm text-green-300">{otpMessage}</p>}
                                 {otpError && <p className="mt-3 text-sm text-red-300">{otpError}</p>}
                             </div>
+
+                            <ProfileImageUpload
+                                value={profileImagePreviewUrl}
+                                isUploading={isUploadingProfileImage}
+                                disabled={!isPhoneVerified}
+                                onChange={uploadProfileImage}
+                            />
 
                             <Input
                                 label="Years of Experience"
@@ -913,10 +919,12 @@ function formatLabel(value: string) {
 function ProfileImageUpload({
     value,
     isUploading,
+    disabled,
     onChange,
 }: {
     value: string;
     isUploading: boolean;
+    disabled: boolean;
     onChange: (file: File) => void;
 }) {
     return (
@@ -945,7 +953,7 @@ function ProfileImageUpload({
             </div>
 
             <label
-                className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${isUploading
+                className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${isUploading || disabled
                     ? "cursor-not-allowed bg-[#2a2419] text-[#7e7464]"
                     : "cursor-pointer bg-[#d6ab5f] text-black hover:scale-[1.02]"
                     }`}
@@ -955,7 +963,7 @@ function ProfileImageUpload({
                 <input
                     type="file"
                     accept="image/*"
-                    disabled={isUploading}
+                    disabled={isUploading || disabled}
                     className="hidden"
                     onChange={(event) => {
                         const file = event.target.files?.[0];
@@ -966,7 +974,7 @@ function ProfileImageUpload({
             </label>
 
             <p className="mt-3 text-xs text-[#8f8778]">
-                Upload a clear photo. JPG or PNG recommended.
+                {disabled ? "Verify your phone number above to upload a profile picture." : "Upload a clear photo. Phone photos, JPG, and PNG are accepted."}
             </p>
         </div>
     );
@@ -1052,9 +1060,9 @@ async function uploadProfessionalFile(
     };
 }
 
-async function prepareIdPhoto(file: File): Promise<File> {
+async function prepareApplicationPhoto(file: File, name: string): Promise<File> {
     if (!file.type.startsWith("image/") && !/\.(heic|heif|jpe?g|png|webp)$/i.test(file.name)) {
-        throw new Error("Please choose a PDF or a photo of your ID.");
+        throw new Error("Please choose a photo in JPG, PNG, or a supported phone photo format.");
     }
 
     const image = new window.Image();
@@ -1073,9 +1081,9 @@ async function prepareIdPhoto(file: File): Promise<File> {
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
         const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", 0.8));
         if (!blob) throw new Error("Could not convert this photo.");
-        return new File([blob], "id-photo.jpg", { type: "image/jpeg" });
+        return new File([blob], name, { type: "image/jpeg" });
     } catch {
-        throw new Error("Your phone could not read this photo. Please take a new photo or choose a JPG, PNG, or PDF.");
+        throw new Error("Your phone could not read this photo. Please take a new photo or choose a JPG or PNG.");
     } finally {
         URL.revokeObjectURL(objectUrl);
     }
