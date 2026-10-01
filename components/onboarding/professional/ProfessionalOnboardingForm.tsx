@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 12108)
-Total output lines: 1085
-
 "use client";
 
 import { useState } from "react";
@@ -549,7 +546,10 @@ export default function ProfessionalOnboardingForm() {
                                     <legend className="px-2 text-sm leading-6 text-[#f3eadb]">{index + 1}. {item.question}</legend>
                                     <div className="mt-2 flex gap-3">
                                         {[true, false].map(answer => (
-                                            <label key={String(answer)} className={`flex min-h-12 flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${formData.screeningAnswers[item.id] === answer ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]"…108 tokens truncated…                    </label>
+                                            <label key={String(answer)} className={`flex min-h-12 flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${formData.screeningAnswers[item.id] === answer ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]" : "border-[#5b5141] text-white"}`}>
+                                                <input type="radio" name={`screening-${item.id}`} checked={formData.screeningAnswers[item.id] === answer} onChange={() => updateField("screeningAnswers", { ...formData.screeningAnswers, [item.id]: answer })} className="h-5 w-5 accent-[#d6ab5f]" />
+                                                {answer ? "Yes" : "No"}
+                                            </label>
                                         ))}
                                     </div>
                                 </fieldset>
