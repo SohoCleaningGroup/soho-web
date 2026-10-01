@@ -181,6 +181,20 @@ export default function ProfessionalOnboardingForm() {
     };
 
     const nextStep = () => {
+        if (step === 0) {
+            if (formData.fullName.trim().length < 2) {
+                alert("Please enter your full name before continuing.");
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+                alert("Please enter a valid email address before continuing.");
+                return;
+            }
+            if (formData.experienceYears && (!Number.isInteger(Number(formData.experienceYears)) || Number(formData.experienceYears) < 0 || Number(formData.experienceYears) > 80)) {
+                alert("Please enter a number of years of experience between 0 and 80.");
+                return;
+            }
+        }
         if (step === 0 && !isPhoneVerified) {
             alert("Please verify your phone number before continuing.");
             return;

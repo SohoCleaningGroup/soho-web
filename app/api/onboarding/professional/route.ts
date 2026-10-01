@@ -58,8 +58,20 @@ export async function POST(request: Request) {
         field: issue.path.join("."),
         code: issue.code,
       })));
+      const field = String(parsed.error.issues[0]?.path[0] || "");
+      const fieldMessages: Record<string, string> = {
+        fullName: "Please enter your full name (at least two characters).",
+        email: "Please enter a valid email address.",
+        phone: "Please check your phone number.",
+        experienceYears: "Please enter a number of years of experience between 0 and 80.",
+        screeningAnswers: "Please answer all ten Yes or No questions.",
+        kitchenScenarioAnswer: "Please choose one answer for the dishes-in-the-sink question.",
+        idDocumentType: "Please choose your ID document type.",
+        idDocumentFrontUrl: "Please upload the first ID photo again.",
+        idDocumentBackUrl: "Please upload the second ID photo again.",
+      };
       return NextResponse.json(
-        { success: false, message: "Please review your application, answer all ten Yes or No questions, and choose one sink scenario response." },
+        { success: false, message: fieldMessages[field] || "Please review your application details and try again.", field },
         { status: 400 }
       );
     }
@@ -89,7 +101,7 @@ export async function POST(request: Request) {
         profile: !!data.profileImageUrl && !data.profileImageUrl.startsWith(expectedProfile),
       });
       return NextResponse.json(
-        { success: false, message: "Invalid uploaded file reference." },
+        { success: false, message: "One of your uploaded photos no longer matches your verified phone. Please go back and upload your photos again." },
         { status: 400 }
       );
     }
