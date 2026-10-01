@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const parsed = applicationSchema.safeParse(await request.json());
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, message: "Please review your application, choose Yes or No for all ten questions, and answer the kitchen scenario." },
+        { success: false, message: "Please review your application, answer all ten Yes or No questions, and choose one sink scenario response." },
         { status: 400 }
       );
     }

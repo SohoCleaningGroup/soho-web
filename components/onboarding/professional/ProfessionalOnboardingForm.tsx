@@ -1,9 +1,12 @@
+Warning: truncated output (original token count: 12108)
+Total output lines: 1085
+
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CLEANER_APPLICATION_QUESTIONS, KITCHEN_SCENARIO_QUESTION, type CleanerQuestionId } from "@/lib/cleaner-application-questions";
+import { CLEANER_APPLICATION_QUESTIONS, KITCHEN_SCENARIO_CHOICES, KITCHEN_SCENARIO_QUESTION, type CleanerQuestionId } from "@/lib/cleaner-application-questions";
 
 type IdDocumentType = "NATIONAL_ID" | "PASSPORT" | "";
 
@@ -186,8 +189,8 @@ export default function ProfessionalOnboardingForm() {
             return;
         }
 
-        if (step === 3 && (CLEANER_APPLICATION_QUESTIONS.some(item => typeof formData.screeningAnswers[item.id] !== "boolean") || formData.kitchenScenarioAnswer.trim().length < 10)) {
-            alert("Please choose Yes or No for each question and tell us how you would handle the kitchen scenario (at least 10 characters).");
+        if (step === 3 && (CLEANER_APPLICATION_QUESTIONS.some(item => typeof formData.screeningAnswers[item.id] !== "boolean") || !KITCHEN_SCENARIO_CHOICES.includes(formData.kitchenScenarioAnswer as typeof KITCHEN_SCENARIO_CHOICES[number]))) {
+            alert("Please choose Yes or No for each question and select one sink scenario response.");
             return;
         }
 
@@ -264,31 +267,19 @@ export default function ProfessionalOnboardingForm() {
         side: "front" | "back"
     ) => {
         try {
-            const allowedTypes = [
-                "application/pdf",
-                "image/png",
-                "image/jpeg",
-                "image/jpg",
-            ];
-
-            if (!allowedTypes.includes(file.type)) {
-                alert("Only PDF, PNG, JPEG, and JPG files are allowed.");
-                return;
-            }
-
-            if (file.size > 2 * 1024 * 1024) {
-                alert("File size must be less than 2MB.");
-                return;
-            }
-
             if (side === "front") {
                 setIsUploadingIdFront(true);
             } else {
                 setIsUploadingIdBack(true);
             }
+            const uploadFile = file.type === "application/pdf" ? file : await prepareIdPhoto(file);
+
+            if (uploadFile.size > 2 * 1024 * 1024) {
+                throw new Error("This file is too large. Please choose a PDF under 2 MB or a different photo.");
+            }
 
             const upload = await uploadProfessionalFile(
-                file,
+                uploadFile,
                 side === "front" ? "id-front" : "id-back",
                 normalizePhone()
             );
@@ -300,7 +291,7 @@ export default function ProfessionalOnboardingForm() {
             }
         } catch (error) {
             console.error(error);
-            alert("Document upload failed. Please try again.");
+            alert(error instanceof Error ? error.message : "Document upload failed. Please try again.");
         } finally {
             setIsUploadingIdFront(false);
             setIsUploadingIdBack(false);
@@ -558,15 +549,23 @@ export default function ProfessionalOnboardingForm() {
                                     <legend className="px-2 text-sm leading-6 text-[#f3eadb]">{index + 1}. {item.question}</legend>
                                     <div className="mt-2 flex gap-3">
                                         {[true, false].map(answer => (
-                                            <label key={String(answer)} className={`flex min-h-12 flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${formData.screeningAnswers[item.id] === answer ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]" : "border-[#5b5141] text-white"}`}>
-                                                <input type="radio" name={`screening-${item.id}`} checked={formData.screeningAnswers[item.id] === answer} onChange={() => updateField("screeningAnswers", { ...formData.screeningAnswers, [item.id]: answer })} className="h-5 w-5 accent-[#d6ab5f]" />
-                                                {answer ? "Yes" : "No"}
-                                            </label>
+                                            <label key={String(answer)} className={`flex min-h-12 flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${formData.screeningAnswers[item.id] === answer ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]"…108 tokens truncated…                    </label>
                                         ))}
                                     </div>
                                 </fieldset>
                             ))}
-                            <Textarea label={KITCHEN_SCENARIO_QUESTION} placeholder="Tell us what you would do and why, in your own words." value={formData.kitchenScenarioAnswer} onChange={value => updateField("kitchenScenarioAnswer", value)} maxLength={1500} />
+                            <fieldset className="rounded-2xl border border-[#2f291d] bg-[#111111] p-5">
+                                <legend className="px-2 text-sm leading-6 text-[#f3eadb]">{KITCHEN_SCENARIO_QUESTION}</legend>
+                                <p className="mt-2 text-sm text-[#cfc7b7]">There is no correct answer. Choose what you would most likely do.</p>
+                                <div className="mt-4 grid gap-3">
+                                    {KITCHEN_SCENARIO_CHOICES.map((choice, index) => (
+                                        <label key={choice} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ${formData.kitchenScenarioAnswer === choice ? "border-[#d6ab5f] bg-[#151008] text-[#e3bd74]" : "border-[#5b5141] text-white"}`}>
+                                            <input type="radio" name="kitchen-scenario" checked={formData.kitchenScenarioAnswer === choice} onChange={() => updateField("kitchenScenarioAnswer", choice)} className="h-5 w-5 accent-[#d6ab5f]" />
+                                            {index + 1}. {choice}
+                                        </label>
+                                    ))}
+                                </div>
+                            </fieldset>
                             <Textarea
                                 label="Anything else you’d like us to know? (optional)"
                                 placeholder="Tell us about past jobs, what you enjoy about cleaning, or anything you’d like to explain about your answers."
@@ -634,7 +633,7 @@ export default function ProfessionalOnboardingForm() {
 
                             <div className="rounded-[22px] border border-[#2f291d] bg-[#111111] p-5">
                                 <p className="text-sm leading-7 text-[#cfc7b7]">
-                                    Accepted files: PDF, PNG, JPG, JPEG. Maximum file size: 2MB per file.
+                                    Choose a PDF or a photo from your phone. Photos are resized before uploading; PDFs must be under 2 MB.
                                 </p>
                             </div>
                         </div>
@@ -1011,7 +1010,7 @@ function IdDocumentUpload({
 
                 <input
                     type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                    accept="application/pdf,image/*,.heic,.heif"
                     disabled={isUploading}
                     className="hidden"
                     onChange={(event) => {
@@ -1051,6 +1050,35 @@ async function uploadProfessionalFile(
         previewUrl:
             typeof result.previewUrl === "string" ? result.previewUrl : undefined,
     };
+}
+
+async function prepareIdPhoto(file: File): Promise<File> {
+    if (!file.type.startsWith("image/") && !/\.(heic|heif|jpe?g|png|webp)$/i.test(file.name)) {
+        throw new Error("Please choose a PDF or a photo of your ID.");
+    }
+
+    const image = new window.Image();
+    const objectUrl = URL.createObjectURL(file);
+    try {
+        image.src = objectUrl;
+        await image.decode();
+        const ratio = Math.min(1, 1800 / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.naturalWidth * ratio);
+        canvas.height = Math.round(image.naturalHeight * ratio);
+        const context = canvas.getContext("2d");
+        if (!context || !canvas.width || !canvas.height) throw new Error("Could not read this photo.");
+        context.fillStyle = "white";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", 0.8));
+        if (!blob) throw new Error("Could not convert this photo.");
+        return new File([blob], "id-photo.jpg", { type: "image/jpeg" });
+    } catch {
+        throw new Error("Your phone could not read this photo. Please take a new photo or choose a JPG, PNG, or PDF.");
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
 }
 
 const inputClass =

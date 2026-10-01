@@ -15,4 +15,10 @@ export type CleanerQuestionId = typeof CLEANER_APPLICATION_QUESTIONS[number]["id
 
 export const KITCHEN_SCENARIO_QUESTION = "You arrive at a job and notice a small number of dishes left in the sink, even though dishes were not included in the service booked. What would you most likely do?";
 
-export const KITCHEN_SCENARIO_REVIEW_GUIDANCE = "Look for initiative and sound judgment: help with a few dishes when reasonable; communicate if the amount is excessive. Use the answer as an interview starting point, not an automatic hiring score.";
+export const KITCHEN_SCENARIO_CHOICES = [
+  "Leave the dishes alone.",
+  "Call the admin and ask what to do.",
+  "Wash the dishes.",
+] as const;
+
+export const KITCHEN_SCENARIO_REVIEW_GUIDANCE = "There is no correct answer. Ask the applicant about their choice during the interview.";

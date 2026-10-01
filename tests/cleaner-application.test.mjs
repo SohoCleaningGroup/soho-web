@@ -13,7 +13,7 @@ function load(path, mocks = {}) {
 }
 const questions = load('lib/cleaner-application-questions.ts');
 const screening = load('lib/cleaner-application.ts', { './cleaner-application-questions': questions });
-const input = () => ({ screeningAnswers: Object.fromEntries(questions.CLEANER_APPLICATION_QUESTIONS.map(q => [q.id, false])), kitchenScenarioAnswer: 'I would wash a few dishes and ask about anything excessive.' });
+const input = () => ({ screeningAnswers: Object.fromEntries(questions.CLEANER_APPLICATION_QUESTIONS.map(q => [q.id, false])), kitchenScenarioAnswer: questions.KITCHEN_SCENARIO_CHOICES[1] });
 
 test('explicit No answers are valid and survive storage', () => {
   const data = screening.cleanerScreeningSchema.parse(input());
@@ -28,17 +28,21 @@ test('missing answers are rejected rather than saved as No', () => {
   assert.equal(screening.cleanerScreeningSchema.safeParse(data).success, false);
   assert.equal(screening.cleanerScreeningSchema.safeParse({ ...input(), screeningAnswers: {} }).success, false);
 });
-test('strings, unknown question IDs and empty scenarios cannot bypass validation', () => {
+test('invalid answers, unknown question IDs and unlisted scenarios cannot bypass validation', () => {
   const data = input(); data.screeningAnswers.privacy = 'yes';
   assert.equal(screening.cleanerScreeningSchema.safeParse(data).success, false);
   assert.equal(screening.cleanerScreeningSchema.safeParse({ ...input(), screeningAnswers: { ...input().screeningAnswers, invented: true } }).success, false);
   assert.equal(screening.cleanerScreeningSchema.safeParse({ ...input(), kitchenScenarioAnswer: '   ' }).success, false);
-  assert.equal(screening.cleanerScreeningSchema.safeParse({ ...input(), kitchenScenarioAnswer: 'x'.repeat(1501) }).success, false);
+  assert.equal(screening.cleanerScreeningSchema.safeParse({ ...input(), kitchenScenarioAnswer: 'I would do something else.' }).success, false);
+  for (const choice of questions.KITCHEN_SCENARIO_CHOICES) {
+    assert.equal(screening.cleanerScreeningSchema.safeParse({ ...input(), kitchenScenarioAnswer: choice }).success, true);
+  }
 });
 test('saved questions retain their wording and legacy applications need no fabricated answers', () => {
   const saved = screening.buildCleanerScreeningSnapshot(screening.cleanerScreeningSchema.parse(input()));
   saved.responses[0].question = 'Historical wording';
   assert.equal(screening.readCleanerScreeningSnapshot(JSON.parse(JSON.stringify(saved))).responses[0].question, 'Historical wording');
+  assert.equal(screening.readCleanerScreeningSnapshot({ ...saved, version: '2026-09-30', scenario: { question: 'Earlier question', answer: 'Earlier free-text response' } }).scenario.answer, 'Earlier free-text response');
   assert.equal(screening.readCleanerScreeningSnapshot(null), null);
   assert.equal(screening.readCleanerScreeningSnapshot({}), null);
 });
