@@ -81,6 +81,7 @@ model BookingSlotHold {
 
 model ProfessionalProfile {
   jobAssignments JobAssignment[]
+  payNotices CleanerPayNotice[]
   id              String  @id @default(cuid())
   fullName        String
   email           String  @unique
@@ -304,4 +305,27 @@ model ReferralUse {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([accountId, status])
+}
+
+model CleanerPayNotice {
+  employeeName String
+  id String @id @default(cuid())
+  professionalId String
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  primaryLanguage String
+  effectiveDate String
+  version String
+  snapshot String
+  snapshotHash String
+  tokenHash String @unique
+  expiresAt DateTime
+  sentAt DateTime?
+  signedAt DateTime?
+  signedName String?
+  signedIp String?
+  signedUserAgent String?
+  receiptSentAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([professionalId, createdAt])
 }

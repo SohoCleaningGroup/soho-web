@@ -10,6 +10,8 @@ import {
   createProfileViewUrl,
 } from "@/lib/professional-documents";
 import { hasValidAdminSession } from "@/lib/security/admin-auth";
+import PayNoticeResend from "@/components/admin/professionals/PayNoticeResend";
+import PayNoticeAction from "@/components/admin/professionals/PayNoticeAction";
 import { PHONE_NUMBER } from "@/lib/site";
 
 export default async function ProfessionalDetailPage({
@@ -30,6 +32,8 @@ export default async function ProfessionalDetailPage({
   if (!professional) {
     notFound();
   }
+
+  const payNotices = await prisma.cleanerPayNotice.findMany({ where: { professionalId: id }, orderBy: { createdAt: "desc" } });
 
   const screening = readCleanerScreeningSnapshot(professional.screeningResponses);
 
@@ -203,7 +207,20 @@ export default async function ProfessionalDetailPage({
   </div>
 </Panel>
           {professional.status === "APPROVED" && <Panel title="Individual pay notice">
-            <p className="text-sm leading-7 text-[#f3eadb]">Complete the official New York pay notice for this cleaner at hiring, before their first shift. The signed hiring terms and approval email do not replace this notice. Confirm the actual rates and the cleaner’s primary language before filling it out.</p>
+            <PayNoticeAction professionalId={professional.id} fullName={professional.fullName} />
+            <div className="mt-6 space-y-4">
+              {payNotices.map(notice => <details key={notice.id} className="rounded-xl border border-[#8f6b2f] p-4 text-sm text-[#e8dfce]">
+                <summary className="cursor-pointer">Effective {notice.effectiveDate} · {notice.primaryLanguage === "es" ? "English + Spanish" : "English"} · {notice.signedAt ? `Signed by ${notice.signedName}` : notice.sentAt ? "Email sent — awaiting signature" : "Email not sent"}</summary>
+                <p className="mt-3">Prepared: {notice.createdAt.toLocaleString("en-US", { timeZone: "America/New_York" })} (New York)</p>
+                {notice.signedAt && <p>Signed: {notice.signedAt.toLocaleString("en-US", { timeZone: "America/New_York" })} (New York). Receipt email: {notice.receiptSentAt ? "sent" : "not sent"}.</p>}
+                <p className="mt-3 break-all text-xs">SHA-256: {notice.snapshotHash}</p>
+                <pre className="mt-3 whitespace-pre-wrap font-sans leading-7">{notice.snapshot}</pre>
+                <PayNoticeResend id={notice.id} signed={Boolean(notice.signedAt)} />
+              </details>)}
+            </div>
+            <details className="mt-6">
+              <summary className="cursor-pointer text-[#e3bd74]">Employer details and official paper forms</summary>
+            <p className="text-sm leading-7 text-[#f3eadb]">The online notice above records acknowledgment separately from the hiring terms. If you use paper instead, complete the appropriate New York form at hiring, provide copies in the required languages, and retain the signed record for at least six years.</p>
             <div className="mt-5">
               <InfoGrid items={[
                 ["Legal employer", "SoHo Cleaning Group LLC"],
@@ -220,6 +237,7 @@ export default async function ProfessionalDetailPage({
               <a href="https://dol.ny.gov/LS55-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">Open NY LS 55 and translations</a>
               <a href="https://dol.ny.gov/LS54-doc" target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-[#8f6b2f] px-4 py-3">Open NY LS 54</a>
             </div>
+            </details>
           </Panel>}
         </div>
       </div>

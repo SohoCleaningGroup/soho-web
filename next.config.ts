@@ -48,7 +48,7 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      ...["/referrals/:path*", "/api/referrals/:path*", "/jobs/:path*", "/review/:path*", "/api/jobs/:path*"].map(source => ({ source, headers: [
+      ...["/referrals/:path*", "/api/referrals/:path*", "/jobs/:path*", "/review/:path*", "/api/jobs/:path*", "/professional/pay-notice/:path*", "/professional/hiring/:path*", "/api/professional/pay-notice/:path*", "/api/admin/professionals/pay-notice/:path*"].map(source => ({ source, headers: [
         { key: "Referrer-Policy", value: "no-referrer" },
         { key: "X-Robots-Tag", value: "noindex, nofollow" },
         { key: "Cache-Control", value: "private, no-store" },
