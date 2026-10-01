@@ -85,7 +85,10 @@ export default function TermsAndConditionsPage() {
             you prefer that we use your cleaning products, specialty tools, or
             surface-specific products, please let us know before your scheduled
             appointment. We will do our best to accommodate your request when
-            possible.
+            possible. We recommend using our own equipment because we know its
+            condition and performance. If you request customer-provided products
+            or equipment, they must be safe and in working order; worn, damaged,
+            or unsuitable equipment may limit the work we can complete.
           </Section>
 
           <Section title="9. Client-Provided Products or Equipment">
