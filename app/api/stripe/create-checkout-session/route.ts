@@ -73,6 +73,10 @@ const checkoutSchema = z.object({
   // this value to create the booking, so reject longer notes before opening
   // Checkout instead of letting Stripe fail the session request.
   specialNotes: z.string().trim().max(500).optional().default(""),
+  willBeHome: z.enum(["YES", "NO"]),
+  accessMethod: z.enum(["CUSTOMER", "DOORMAN", "SECURE_KEY", "OTHER"]),
+  accessInstructions: z.string().trim().max(200).default(""),
+  prefersOwnSupplies: z.boolean().default(false),
 });
 
 export async function POST(request: Request) {
@@ -129,6 +133,15 @@ export async function POST(request: Request) {
     }
 
     const body = parsed.data;
+    if ((body.willBeHome === "NO" && body.accessMethod === "CUSTOMER") ||
+        (["SECURE_KEY", "OTHER"].includes(body.accessMethod) && !body.accessInstructions)) {
+      return NextResponse.json({ success: false, message: "Please check how our team will access your home." }, { status: 400 });
+    }
+    const accessSummary = `Access: ${body.willBeHome === "YES" ? "Customer home" : "Customer away"}; ${body.accessMethod}; ${body.accessInstructions || "No extra instructions"}`;
+    const bookingNotes = `${accessSummary}\nSupplies: ${body.prefersOwnSupplies ? "Customer prefers own products/equipment" : "SoHo products/equipment"}\nSpecial notes: ${body.specialNotes || "None"}`;
+    if (bookingNotes.length > 500) {
+      return NextResponse.json({ success: false, message: "Please shorten your access instructions or special notes." }, { status: 400 });
+    }
     const phone = normalizePhone(body.phone);
     if (!(await isPhoneVerified(phone))) {
       return NextResponse.json(
@@ -255,6 +268,7 @@ export async function POST(request: Request) {
       cleaningType: body.cleaningType as CleaningType,
       homeSize: body.homeSize as HomeSize,
       totalSqft: body.totalSqft,
+      frequency: body.frequency,
     });
 
     if (body.cleaningType === "MOVE_IN_MOVE_OUT" && body.selectedAddOns.length) {
@@ -335,7 +349,7 @@ export async function POST(request: Request) {
         selectedAddOns: selectedAddOns.map((addOn) => addOn.id).join(","),
         selectedAddOnLabels: selectedAddOns.map((addOn) => addOn.label).join(", "),
         addOnTotal: String(addOnTotal),
-        specialNotes: body.specialNotes,
+        specialNotes: bookingNotes,
         calculatedTotal: String(finalTotal),
         paymentFlow: "MANUAL_CAPTURE",
       },
