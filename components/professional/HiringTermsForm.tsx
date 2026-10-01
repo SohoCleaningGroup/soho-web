@@ -15,6 +15,13 @@ export default function HiringTermsForm({ token, fullName, language }: { token: 
   </section>;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+    if (normalize(name) !== normalize(fullName)) {
+      setMessage(language === "es"
+        ? `Escribe exactamente “${fullName}”, el nombre que aparece en tu solicitud.`
+        : `Type “${fullName}” exactly as it appears on your application.`);
+      return;
+    }
     setBusy(true); setMessage("");
     try {
       const response = await fetch("/api/professional/hiring/sign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, name, agreed, language }) });
@@ -26,7 +33,13 @@ export default function HiringTermsForm({ token, fullName, language }: { token: 
     finally { setBusy(false); }
   }
   return <form onSubmit={submit} className="mt-8 rounded-2xl border border-[#8f6b2f] p-6">
-    <p className="text-[#e8dfce]">{language === "es" ? "Firma escribiendo tu nombre completo tal como aparece en tu solicitud:" : "Sign by typing your full name as it appears on your application:"} <strong>{fullName}</strong></p>
+    <div className="mb-6 rounded-xl border border-[#5b4120] bg-[#151008] p-4">
+      <p className="text-[#e8dfce]">{language === "es" ? "¿Prefieres firmar en inglés?" : "Prefer to read and sign in Spanish?"}</p>
+      <a className="mt-2 inline-block font-medium text-[#e3bd74] underline" href={`/professional/hiring/${token}${language === "es" ? "" : "?lang=es"}`}>
+        {language === "es" ? "Read and sign in English" : "Leer y firmar en español"}
+      </a>
+    </div>
+    <p className="text-[#e8dfce]">{language === "es" ? "Escribe exactamente el nombre registrado en tu solicitud:" : "Type the exact name saved on your application:"} <strong>{fullName}</strong></p>
     <label htmlFor="signature-name" className="mt-5 block text-sm text-[#e8dfce]">{language === "es" ? "Nombre completo" : "Full name"}</label>
     <input id="signature-name" value={name} onChange={event => setName(event.target.value)} autoComplete="name" required maxLength={120} disabled={signed || busy} className="mt-2 w-full rounded-xl border border-[#8f6b2f] bg-[#101010] p-3 text-white" />
     <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-[#e8dfce]"><input type="checkbox" checked={agreed} onChange={event => setAgreed(event.target.checked)} required disabled={signed || busy} className="mt-1" /><span>{language === "es" ? "Soy la persona indicada arriba. Leí y acepto firmar electrónicamente la versión de los términos mostrada en esta página." : "I am the person named above. I have read and agree to electronically sign the version of the terms shown on this page."}</span></label>
