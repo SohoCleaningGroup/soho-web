@@ -19,3 +19,7 @@ ALTER TABLE "CleanerWeeklyAvailability"
 ADD CONSTRAINT "CleanerWeeklyAvailability_professionalId_fkey"
 FOREIGN KEY ("professionalId") REFERENCES "ProfessionalProfile"("id")
 ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "CleanerWeeklyAvailability" ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE "CleanerWeeklyAvailability" FROM anon, authenticated;
