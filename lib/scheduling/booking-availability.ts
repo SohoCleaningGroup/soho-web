@@ -145,12 +145,14 @@ export function isSlotAvailable({
   intervals,
   capacity,
   travelBufferMinutes,
+  capacityAtMinute,
 }: {
   requestedSlot: BookingTimeSlot;
   requestedDurationMinutes: number;
   intervals: ScheduledInterval[];
   capacity: number;
   travelBufferMinutes: number;
+  capacityAtMinute?: (serviceMinute: number) => number;
 }) {
   const requestedStart = slotStartMinutes(requestedSlot);
   if (requestedStart === null) return false;
@@ -195,7 +197,11 @@ export function isSlotAvailable({
       }
     }
 
-    if (overlapping >= capacity) {
+    const effectiveCapacity = capacityAtMinute
+      ? capacityAtMinute(minute)
+      : capacity;
+
+    if (effectiveCapacity <= 0 || overlapping >= effectiveCapacity) {
       return false;
     }
   }

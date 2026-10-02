@@ -15,6 +15,10 @@ import type {
   HomeSize,
 } from "@/lib/pricing/cleaning-pricing";
 import { getClientIp, rateLimit } from "@/lib/security/request";
+import {
+  cleanerCapacityAtServiceMinute,
+  weekStartUtc,
+} from "@/lib/scheduling/cleaner-weekly-availability";
 
 const SUPPORTED_CLEANING_TYPES = new Set<CleaningType>([
   "SOHO_SIGNATURE",
@@ -103,7 +107,9 @@ export async function GET(request: Request) {
     where: { expiresAt: { lte: now } },
   });
 
-  const [bookings, holds] = await Promise.all([
+  const weekStart = weekStartUtc(preferredDate);
+
+  const [bookings, holds, approvedCleanerCount, cleanerSchedules] = await Promise.all([
     prisma.booking.findMany({
       where: {
         preferredDate: { gte: dayStart, lt: dayEnd },
@@ -124,10 +130,34 @@ export async function GET(request: Request) {
         estimatedDurationMinutes: true,
       },
     }),
+    prisma.professionalProfile.count({
+      where: { status: "APPROVED" },
+    }),
+    prisma.cleanerWeeklyAvailability.findMany({
+      where: {
+        weekStart,
+        professional: { status: "APPROVED" },
+      },
+      select: { windows: true },
+    }),
   ]);
 
   const intervals = [...bookings, ...holds];
-  const capacity = getBookingCapacity();
+  const fallbackCapacity = getBookingCapacity();
+  const capacity = approvedCleanerCount > 0
+    ? Math.max(
+        0,
+        ...BOOKING_TIME_SLOTS.map((slot) => {
+          const startHour = Number(slot.slice(0, 2));
+          const startMinute = Number(slot.slice(3, 5));
+          return cleanerCapacityAtServiceMinute({
+            schedules: cleanerSchedules,
+            weekday: requestedDay,
+            serviceMinute: (startHour - 8) * 60 + startMinute,
+          });
+        })
+      )
+    : fallbackCapacity;
   const travelBufferMinutes = getTravelBufferMinutes();
 
   const unavailableSlots = BOOKING_TIME_SLOTS.filter(
@@ -139,12 +169,24 @@ export async function GET(request: Request) {
         intervals,
         capacity,
         travelBufferMinutes,
+        capacityAtMinute:
+          approvedCleanerCount > 0
+            ? (serviceMinute) =>
+                cleanerCapacityAtServiceMinute({
+                  schedules: cleanerSchedules,
+                  weekday: requestedDay,
+                  serviceMinute,
+                })
+            : undefined,
       })
   );
 
   return NextResponse.json({
     success: true,
     capacity,
+    capacitySource:
+      approvedCleanerCount > 0 ? "cleaner-weekly-availability" : "configured-fallback",
+    submittedCleanerSchedules: cleanerSchedules.length,
     estimatedDurationMinutes: requestedDurationMinutes,
     travelBufferMinutes,
     unavailableSlots,

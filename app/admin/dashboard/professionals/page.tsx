@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 
 import { createProfileViewUrl } from "@/lib/professional-documents";
 import { hasValidAdminSession } from "@/lib/security/admin-auth";
+import { createCleanerAvailabilityToken } from "@/lib/scheduling/cleaner-weekly-availability";
+import CleanerAvailabilityLink from "@/components/admin/CleanerAvailabilityLink";
 
 type ProfessionalItem = {
   id: string;
@@ -21,6 +23,10 @@ type ProfessionalItem = {
   bio: string | null;
   status: string;
   createdAt: Date;
+  weeklyAvailability: {
+    weekStart: Date;
+    submittedAt: Date;
+  }[];
 };
 
 export default async function AdminProfessionalsPage() {
@@ -31,6 +37,16 @@ export default async function AdminProfessionalsPage() {
     const professionals = await prisma.professionalProfile.findMany({
         orderBy: {
             createdAt: "desc",
+        },
+        include: {
+            weeklyAvailability: {
+                orderBy: { weekStart: "desc" },
+                take: 1,
+                select: {
+                    weekStart: true,
+                    submittedAt: true,
+                },
+            },
         },
     });
     const professionalItems = await Promise.all(
@@ -120,6 +136,22 @@ export default async function AdminProfessionalsPage() {
                                     >
                                         View Details
                                     </Link>
+
+                                    {professional.status === "APPROVED" && (
+                                        <CleanerAvailabilityLink
+                                            path={`/availability/${professional.id}?token=${encodeURIComponent(
+                                                createCleanerAvailabilityToken(professional.id)
+                                            )}`}
+                                        />
+                                    )}
+
+                                    {professional.status === "APPROVED" && (
+                                        <div className="text-xs text-[#8f8778]">
+                                            {professional.weeklyAvailability[0]
+                                                ? `Latest schedule: week of ${professional.weeklyAvailability[0].weekStart.toLocaleDateString("en-US")}`
+                                                : "Weekly schedule not submitted yet"}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
