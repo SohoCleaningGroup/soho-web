@@ -205,9 +205,9 @@ const addOnOptions = [
     },
 ];
 
-export default function UserOnboardingForm({ initialReferralCode = "", isTestSite = false }: { initialReferralCode?: string; isTestSite?: boolean }) {
+export default function UserOnboardingForm({ initialReferralCode = "", isTestSite = false, initialSmsPreference = null }: { initialReferralCode?: string; isTestSite?: boolean; initialSmsPreference?: { fullName: string; email: string; phone: string; acceptedSmsConsent: boolean } | null }) {
     const [step, setStep] = useState(0);
-    const [formData, setFormData] = useState<FormData>(() => ({ ...initialData, referralCode: initialReferralCode }));
+    const [formData, setFormData] = useState<FormData>(() => ({ ...initialData, ...initialSmsPreference, referralCode: initialReferralCode }));
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [otpCode, setOtpCode] = useState("");
@@ -437,6 +437,7 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
         setFormData((prev) => ({
             ...prev,
             [field]: value,
+            ...((field === "phone" || field === "email") && value !== prev[field] ? { acceptedSmsConsent: false } : {}),
         }));
 
         if (field === "phone") {
@@ -1011,6 +1012,7 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
                                             setCountryCode(
                                                 event.target.value
                                             );
+                                            updateField("acceptedSmsConsent", false);
                                             setIsPhoneVerified(false);
                                             setIsOtpSent(false);
                                             setOtpCode("");
@@ -1126,7 +1128,8 @@ export default function UserOnboardingForm({ initialReferralCode = "", isTestSit
 
                                 <p className="mt-3 text-xs leading-6 text-[#8f8778]">
                                     You can leave SMS updates unchecked and still book.
-                                    We will send your booking updates by email.
+                                    We will send your booking updates by email. You can also{ " " }
+                                    <Link href="/sms-consent" className="text-[#d6ab5f] underline">save your SMS preference before phone verification</Link>.
                                 </p>
 
                                 {isOtpSent &&

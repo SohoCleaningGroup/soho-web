@@ -152,7 +152,7 @@ export default function TermsAndConditionsPage() {
             STOP to opt out at any time or HELP for assistance. Consent to receive
             booking-update SMS messages is optional and is not a condition of purchase.
             You can book without opting in and receive booking updates by email.
-            Selecting Send code requests a one-time phone-verification text;
+            Our public SMS consent form saves your preference without a login, verification code, payment, or booking. Service messages begin only after a booking with a verified phone number. Selecting Send code requests a one-time phone-verification text;
             this action is separate from enrolling in booking-update SMS. For information about how
             we handle your information, please review our Privacy Policy.
           </Section>

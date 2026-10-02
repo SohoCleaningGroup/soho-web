@@ -343,3 +343,18 @@ model CleanerPayNotice {
 
   @@index([professionalId, createdAt])
 }
+
+// Public consent intake. Only the server may read or write this audit record.
+model SmsConsentRecord {
+  id String @id @default(cuid())
+  fullName String
+  email String
+  phone String
+  accepted Boolean
+  version String
+  disclosure String
+  source String
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+}
