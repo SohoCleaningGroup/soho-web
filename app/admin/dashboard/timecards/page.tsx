@@ -6,7 +6,7 @@ import TimecardReview from "@/components/admin/timecards/TimecardReview";
 import JobLocation from "@/components/admin/timecards/JobLocation";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Cleaner hours — SoHo", robots: { index: false, follow: false } };
-const format = (date: Date) => date.toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" });
+const format = (date: Date) => date.toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short", hour12: true });
 export default async function Page({ searchParams }: { searchParams: Promise<{ before?: string }> }) {
   if (!timeclockEnabled()) return <div><h1 className="text-3xl">Cleaner hours</h1><p className="mt-4">Time tracking is being prepared. No hours are being sent to Square.</p></div>;
   const { before } = await searchParams;
