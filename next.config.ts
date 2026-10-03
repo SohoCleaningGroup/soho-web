@@ -48,7 +48,20 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      ...["/referrals/:path*", "/api/referrals/:path*", "/jobs/:path*", "/review/:path*", "/api/jobs/:path*", "/professional/pay-notice/:path*", "/professional/hiring/:path*", "/api/professional/pay-notice/:path*", "/api/admin/professionals/pay-notice/:path*"].map(source => ({ source, headers: [
+      {
+        source: "/jobs/:path*",
+        headers: [
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=()" },
+        ],
+      },
+      {
+        source: "/admin/dashboard/timecards",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      ...["/referrals/:path*", "/api/referrals/:path*", "/jobs/:path*", "/review/:path*", "/api/jobs/:path*", "/api/admin/timecards", "/professional/pay-notice/:path*", "/professional/hiring/:path*", "/api/professional/pay-notice/:path*", "/api/admin/professionals/pay-notice/:path*"].map(source => ({ source, headers: [
         { key: "Referrer-Policy", value: "no-referrer" },
         { key: "X-Robots-Tag", value: "noindex, nofollow" },
         { key: "Cache-Control", value: "private, no-store" },

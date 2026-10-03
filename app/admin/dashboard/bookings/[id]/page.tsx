@@ -4,6 +4,12 @@ import { AdditionalAuthorizationStatus } from "@prisma/client";
 import Image from "next/image";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { PHOTO_BUCKET } from "@/lib/jobs/service";
+import Link from "next/link";
+import { bookingProgress } from "@/lib/admin/booking-progress";
+import { timeclockEnabled } from "@/lib/timeclock/service";
+import JobLocation from "@/components/admin/timecards/JobLocation";
+import TimecardReview from "@/components/admin/timecards/TimecardReview";
+import { locationAssessment, type LocationSnapshot } from "@/lib/timeclock/rules";
 import JobAssignmentPanel from "@/components/admin/bookings/JobAssignmentPanel";
 import { prisma } from "@/lib/prisma";
 import BookingStatusActions from "@/components/admin/bookings/BookingStatusActions";
@@ -83,6 +89,8 @@ export default async function BookingDetailPage({
         notFound();
     }
 
+    const cards = timeclockEnabled() && booking.jobAssignment ? await prisma.cleanerTimecard.findMany({ where: { assignmentId: booking.jobAssignment.id }, include: { events: { orderBy: { createdAt: "asc" } } }, orderBy: { startedAt: "desc" } }) : [];
+    const progress = bookingProgress({ ...booking, jobAssignment: booking.jobAssignment ? { ...booking.jobAssignment, timecards: cards } : null });
     const workers = await prisma.professionalProfile.findMany({ where: { status: "APPROVED" }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } });
 
     const jobPhotos = await Promise.all((booking.jobAssignment?.photos || []).map(async photo => {
@@ -135,9 +143,13 @@ export default async function BookingDetailPage({
     return (
         <section>
             {booking.referralUse && <div className="mb-6 rounded-2xl border border-[#8f6b2f] p-5"><h2 className="text-lg text-[#d6ab5f]">Referral discount</h2><p className="mt-2">${(booking.referralUse.discountCents / 100).toFixed(2)} · {booking.referralUse.kind.toLowerCase()} · {booking.referralUse.status.toLowerCase()}</p><p className="mt-2 text-sm">Capture the discounted amount. The original card authorization already includes this discount.</p></div>}
+            <header className="mb-6 space-y-3"><Link href="/admin/dashboard/bookings" className="text-[#e3bd74]">← Bookings</Link><h1 className="font-serif text-4xl">{booking.userProfile.fullName}</h1><p className="text-[#cfc7b7]">{booking.preferredDate?.toLocaleDateString("en-US", { timeZone: "UTC" })} · {booking.preferredTime} · {booking.jobAssignment?.professional.fullName || "No cleaner assigned"}</p><p className="text-[#e3bd74]">{progress.label}</p><a href={`#${progress.target}`} className="inline-block rounded-lg bg-[#d6ab5f] px-4 py-3 text-black">{progress.next} →</a><nav className="flex flex-wrap gap-4 text-sm text-[#e3bd74]" aria-label="Booking details"><a href="#assignment">Cleaner & review</a><a href="#time">Hours & location</a><a href="#photos">Completion photos</a><a href="#details">Customer & service</a><a href="#payment">Payments</a></nav></header>
+            <div id="assignment" className="scroll-mt-24">
             <JobAssignmentPanel bookingId={booking.id} workers={workers} current={booking.jobAssignment ? { workerId: booking.jobAssignment.professionalId, name: booking.jobAssignment.professional.fullName, status: booking.jobAssignment.status, reviewStatus: booking.jobAssignment.reviewStatus, reviewNote: booking.jobAssignment.reviewNote, photos: booking.jobAssignment.photos.length } : null} />
-            <div className="my-4 grid gap-4 sm:grid-cols-3">{jobPhotos.map((src, index) => src && <a href={src} key={src} target="_blank" rel="noreferrer"><Image unoptimized src={src} alt={`Job photo ${index + 1}`} width={600} height={600} className="h-auto w-full rounded-xl" /></a>)}</div>
-            <div className="mb-10">
+            </div>
+            <div id="photos" className="my-4 grid gap-4 sm:grid-cols-3">{jobPhotos.map((src, index) => src && <a href={src} key={src} target="_blank" rel="noreferrer"><Image unoptimized src={src} alt={`Job photo ${index + 1}`} width={600} height={600} className="h-auto w-full rounded-xl" /></a>)}</div>
+            <section id="time" className="my-6 scroll-mt-24 space-y-4 rounded-xl border border-[#352b1c] p-5"><h2 className="text-xl text-[#e3bd74]">Hours & location</h2>{timeclockEnabled() && booking.jobAssignment && <JobLocation assignmentId={booking.jobAssignment.id} latitude={booking.jobAssignment.siteLatitude} longitude={booking.jobAssignment.siteLongitude} radius={booking.jobAssignment.siteRadiusMeters}/>}{!cards.length && <p className="text-[#cfc7b7]">No work time recorded for this booking yet.</p>}{cards.map(card=><article key={card.id} className="space-y-3 border-t border-[#352b1c] pt-4"><p>{card.startedAt.toLocaleString("en-US",{timeZone:"America/New_York"})} — {card.endedAt?.toLocaleString("en-US",{timeZone:"America/New_York"}) || "Still clocked in"} · {card.status.toLowerCase()}</p>{card.events.filter(e=>e.actor==="WORKER").map(e=>{const l=(e.detail as {location?:LocationSnapshot}).location;return l&&<p key={e.id} className="text-sm">{e.kind==="CLOCK_IN"?"Clock in":"Clock out"}: {locationAssessment(l,booking.jobAssignment!)}{l.status==="captured"&&<a className="ml-2 text-[#e3bd74] underline" href={`https://www.google.com/maps?q=${l.latitude},${l.longitude}`} target="_blank" rel="noreferrer">View location</a>}</p>})}<TimecardReview id={card.id} revision={card.revision} startedAt={card.startedAt.toISOString()} endedAt={card.endedAt?.toISOString()||null} approved={card.status==="APPROVED"}/></article>)}</section>
+            <div id="details" className="mb-10 scroll-mt-24">
                 <p className="mb-3 text-xs font-medium uppercase tracking-[0.34em] text-[#b7924c]">
                     Booking Details
                 </p>

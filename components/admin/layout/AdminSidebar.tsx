@@ -2,12 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const navItems = [
   { label: "Overview", href: "/admin/dashboard" },
   { label: "Bookings", href: "/admin/dashboard/bookings" },
-  { label: "Professionals", href: "/admin/dashboard/professionals" },
+  { label: "Cleaners", href: "/admin/dashboard/professionals" },
+  { label: "Availability", href: "/admin/dashboard/availability" },
+  { label: "Time & location", href: "/admin/dashboard/timecards" },
+  { label: "Payments", href: "/admin/dashboard/payments" },
   { label: "Referrals", href: "/admin/dashboard/referrals" },
   { label: "Customers", href: "/admin/dashboard/customers" },
 ];
@@ -78,6 +82,7 @@ export default function AdminSidebar() {
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
   return (
     <>
       <div className="mb-10 hidden lg:block">
@@ -100,8 +105,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={(item.href === "/admin/dashboard" ? pathname === item.href : pathname.startsWith(item.href)) ? "page" : undefined}
             onClick={onNavigate}
-            className="block rounded-2xl px-4 py-3 text-sm text-[#d8d0c1] transition hover:bg-[#151008] hover:text-[#e3bd74]"
+            className="block rounded-2xl px-4 py-3 text-sm text-[#d8d0c1] transition hover:bg-[#151008] hover:text-[#e3bd74] aria-[current=page]:bg-[#2d2417] aria-[current=page]:text-[#e3bd74]"
           >
             {item.label}
           </Link>

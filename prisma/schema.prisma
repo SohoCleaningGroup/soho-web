@@ -80,6 +80,7 @@ model BookingSlotHold {
 }
 
 model ProfessionalProfile {
+  timecards CleanerTimecard[]
   jobAssignments JobAssignment[]
   payNotices CleanerPayNotice[]
   weeklyAvailability CleanerWeeklyAvailability[]
@@ -262,6 +263,10 @@ model CleanerWeeklyAvailability {
 }
 
 model JobAssignment {
+  timecards CleanerTimecard[]
+  siteLatitude Float?
+  siteLongitude Float?
+  siteRadiusMeters Int @default(150)
   id String @id @default(cuid())
   bookingId String @unique
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
@@ -281,6 +286,37 @@ model JobAssignment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([professionalId])
+}
+
+model CleanerTimecard {
+  id String @id @default(cuid())
+  assignmentId String
+  assignment JobAssignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  professionalId String
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  startedAt DateTime
+  endedAt DateTime?
+  status String @default("OPEN")
+  approvedAt DateTime?
+  approvalNote String?
+  revision Int @default(1)
+  events CleanerClockEvent[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([professionalId, startedAt])
+  @@index([assignmentId, startedAt])
+  @@index([status, startedAt])
+}
+
+model CleanerClockEvent {
+  id String @id @default(cuid())
+  timecardId String
+  timecard CleanerTimecard @relation(fields: [timecardId], references: [id], onDelete: Restrict)
+  kind String
+  actor String
+  detail Json
+  createdAt DateTime @default(now())
+  @@index([timecardId, createdAt])
 }
 model JobPhoto {
   id String @id @default(cuid())

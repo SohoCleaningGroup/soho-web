@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 
 import { createProfileViewUrl } from "@/lib/professional-documents";
 import { hasValidAdminSession } from "@/lib/security/admin-auth";
-import { createCleanerAvailabilityToken } from "@/lib/scheduling/cleaner-weekly-availability";
 import CleanerAvailabilityLink from "@/components/admin/CleanerAvailabilityLink";
+import { createCleanerAvailabilityToken } from "@/lib/scheduling/cleaner-weekly-availability";
 
 type ProfessionalItem = {
   id: string;
