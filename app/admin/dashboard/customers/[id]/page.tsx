@@ -1,3 +1,4 @@
+import { formatTimeRange } from "@/lib/time-format";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -105,7 +106,7 @@ export default async function CustomerDetailPage({
                         {booking.preferredDate
                           ? booking.preferredDate.toDateString()
                           : "No date"}{" "}
-                        · {booking.preferredTime || "No time"}
+                        · {formatTimeRange(booking.preferredTime) || "No time"}
                       </p>
                     </div>
 
